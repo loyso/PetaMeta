@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <AbstractClass Guid="af488956-c453-474a-9362-b84982c95302" TypeName="Fundamental" BaseClass="e3b634e0-b02b-4516-ae0f-8bb8777f114a">
+      <Members />
+    </AbstractClass>
+    <MetadataClass Guid="d7c8ba10-5c0c-42b6-98cd-e66dfc0d9741" TypeName="FundamentalBool" BaseClass="af488956-c453-474a-9362-b84982c95302">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="0f4fbd03-e049-45af-859f-452c175bb117" TypeName="FundamentalString" BaseClass="af488956-c453-474a-9362-b84982c95302">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="36ce00f0-f500-45a7-88ee-5f60b849b8bb" TypeName="FundamentalInt" BaseClass="af488956-c453-474a-9362-b84982c95302" HasMinMax="true">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="e6051f60-e1f7-4cd9-b535-74d104c4f7cc" TypeName="FundamentalFloat" BaseClass="af488956-c453-474a-9362-b84982c95302" HasMinMax="true">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="4860e7c0-85ed-4b10-ad4e-5b972357a662" TypeName="FundamentalByte" BaseClass="af488956-c453-474a-9362-b84982c95302" HasMinMax="true">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="15a3ee8a-e479-459a-ad2d-6a4e10610329" TypeName="Enumeration" BaseClass="e3b634e0-b02b-4516-ae0f-8bb8777f114a">
+      <Members>
+        <Collection Guid="ebf3d4b3-9076-4197-88fd-02440d0c8f4b" Name="Enumerators" Type="fcc7ef92-ce00-4182-a723-12f671b0e42e" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="0d0bb1bc-8607-4179-a4e3-898f49bdc774" TypeName="Enumerator" IsReferenced="false">
+      <Members>
+        <ValueName Guid="4e9a8a9b-03a1-45ef-9354-7a7f8b378ad8" Name="Name" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" />
+        <Value Guid="304eb3e2-c6d5-4836-a45c-c2571350993a" Name="IntegralValue" Type="d7d192a5-881d-4a91-9bff-4ec1a57f3900" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <CollectionClass Guid="fcc7ef92-ce00-4182-a723-12f671b0e42e" TypeName="EnumeratorsCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>0d0bb1bc-8607-4179-a4e3-898f49bdc774</ItemsClass>
+    </CollectionClass>
+  </Types>
+</MetadataFileContent>

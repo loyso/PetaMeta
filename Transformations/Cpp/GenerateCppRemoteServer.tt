@@ -1,0 +1,122 @@
+<#
+	{
+		string cppOutputReflection = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile );
+		
+		HppRemoteServerCoreGeneration hppRemoteServerCoreGeneration = new HppRemoteServerCoreGeneration( this, project, cppOutputReflection, cppReflectionNamespace );
+		hppRemoteServerCoreGeneration.Output.File = cppOutputReflection + ".RemoteServer.Partial.h";
+		hppRemoteServerCoreGeneration.Output.Project = cppOutputProject;
+		hppRemoteServerCoreGeneration.Render();	
+
+		CppRemoteServerCoreGeneration cppRemoteServerCoreGeneration = new CppRemoteServerCoreGeneration( this, project, cppOutputReflection, cppReflectionNamespace );
+		cppRemoteServerCoreGeneration.Output.File = cppOutputReflection + ".RemoteServer.Partial.cpp";
+		cppRemoteServerCoreGeneration.Output.Project = cppOutputProject;
+		cppRemoteServerCoreGeneration.Render();	
+	}
+#>
+<#+
+public class HppRemoteServerCoreGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppOutputReflection;
+	protected string							CppReflectionNamespace;
+	
+	public HppRemoteServerCoreGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppOutputReflection, string cppReflectionNamespace )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppOutputReflection = cppOutputReflection;
+		CppReflectionNamespace = cppReflectionNamespace;
+	}
+	
+	public override string TransformText()
+	{
+#>
+#ifndef <#=CppOutputReflection#>_RemoteServer_h
+#define <#=CppOutputReflection#>_RemoteServer_h
+
+#include "Core.h"
+#include "Reflection.h"
+
+#include "<#=CppOutputReflection#>.Reflection.h"
+
+namespace <#=Project.CoreNamespace#>
+{
+	namespace remote
+	{
+		class Server_Partial
+		{
+		public:
+			bool ReceiveFromClient( void const * bytes, size_t bytesSize );
+		};
+	}
+} // <#=Project.CoreNamespace#>
+
+#endif // <#=CppOutputReflection#>_RemoteServer_h
+<#+
+		return this.GenerationEnvironment.ToString();
+	} // RenderCore
+} // HppRemoteServerCoreGeneration
+#>
+<#+
+public class CppRemoteServerCoreGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppOutputReflection;
+	protected string							CppReflectionNamespace;
+	
+	public CppRemoteServerCoreGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppOutputReflection, string cppReflectionNamespace )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppOutputReflection = cppOutputReflection;
+		CppReflectionNamespace = cppReflectionNamespace;
+	}
+	
+	public override string TransformText()
+	{
+#>
+#include "<#=CppOutputReflection#>.RemoteServer.h"
+
+namespace <#=Project.CoreNamespace#>
+{
+
+bool remote::Server_Partial::ReceiveFromClient( void const * bytes, size_t bytesSize )
+{
+	core::NetworkByteStreamReader stream( bytes, bytesSize );
+	
+	core::Guid typeGuid; 
+	if ( !stream.ReadGuid( typeGuid ) )
+		return false;
+		
+	<#=CppReflectionNamespace#>::MetadataClass * pType = NULL;
+	if ( !<#=Project.CoreNamespace#>::Reflection::FindMetadataClass( typeGuid, pType ) )
+		return false;
+
+	core::Guid memberFunctionGuid; 
+	if ( !stream.ReadGuid( memberFunctionGuid ) )
+		return false;
+		
+	<#=CppReflectionNamespace#>::Function * pMemberFunction = NULL;
+	if ( !<#=Project.CoreNamespace#>::Reflection::FindMemberFunction( memberFunctionGuid, pMemberFunction ) )
+		return false;
+
+	core::Guid objectGuid; 
+	if ( !stream.ReadGuid( objectGuid ) )
+		return false;
+		
+	core::ReferenceObject * pObject = NULL;
+	if ( !objectGuid.IsEmpty() && !core::Objects::FindObject( objectGuid, pObject ) )
+		return false;
+
+	return pMemberFunction->FunctionCall_FromByteStream( stream, *pType, pObject );
+}
+
+} // <#=Project.CoreNamespace#>
+
+<#+
+		return this.GenerationEnvironment.ToString();
+	} // RenderCore
+} // CppRemoteServerCoreGeneration
+#>

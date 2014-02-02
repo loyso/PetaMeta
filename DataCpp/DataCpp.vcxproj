@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4D1475A6-EED4-4DC1-8164-10CAACEC6994}</ProjectGuid>
+    <RootNamespace>DataCpp</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Core.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Core.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)Bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)Garbage\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)Bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)Garbage\$(Configuration)\$(ProjectName)\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;$(CORE_ARCH);$(CORE_INT64);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;$(CORE_ARCH);$(CORE_INT64);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Metadata\Engine\Fundamental.cpp" />
+    <ClCompile Include="Metadata\Engine\Fundamental.Partial.cpp" />
+    <ClCompile Include="Metadata\Engine\Fundamental.Reflection.cpp" />
+    <ClCompile Include="Metadata\Game\Gui.cpp" />
+    <ClCompile Include="Metadata\Game\Gui.Partial.cpp" />
+    <ClCompile Include="Metadata\Game\Gui.Reflection.cpp" />
+    <ClCompile Include="Metadata\Game\Project.cpp" />
+    <ClCompile Include="Metadata\Game\Project.Partial.cpp" />
+    <ClCompile Include="Metadata\Game\Project.Reflection.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectGlobals.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectGlobals.Partial.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectGlobals.Reflection.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectGui.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectGui.Partial.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectGui.Reflection.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectLevels.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectLevels.Partial.cpp" />
+    <ClCompile Include="Metadata\Game\ProjectLevels.Reflection.cpp" />
+    <ClCompile Include="Metadata\Game\Scene.cpp" />
+    <ClCompile Include="Metadata\Game\Scene.Lua.cpp" />
+    <ClCompile Include="Metadata\Game\Scene.Partial.cpp" />
+    <ClCompile Include="Metadata\Game\Scene.Reflection.cpp" />
+    <ClCompile Include="MetaMetadata\MetaClasses.cpp" />
+    <ClCompile Include="MetaMetadata\MetaClasses.Partial.cpp" />
+    <ClCompile Include="MetaMetadata\MetaFunction.cpp" />
+    <ClCompile Include="MetaMetadata\MetaFunction.Partial.cpp" />
+    <ClCompile Include="MetaMetadata\MetaFundamental.cpp" />
+    <ClCompile Include="MetaMetadata\MetaFundamental.Partial.cpp" />
+    <ClCompile Include="MetaMetadata\MetaPrimitives.cpp" />
+    <ClCompile Include="MetaMetadata\MetaPrimitives.Partial.cpp" />
+    <ClCompile Include="MetaMetadata\MetaProject.cpp" />
+    <ClCompile Include="MetaMetadata\MetaProject.Partial.cpp" />
+    <ClCompile Include="Core.cpp" />
+    <ClCompile Include="CoreLua.cpp" />
+    <ClCompile Include="DataCpp.Lua.cpp" />
+    <ClCompile Include="DataCpp.Reflection.cpp" />
+    <ClCompile Include="DataCpp.RemoteServer.cpp" />
+    <ClCompile Include="DataCpp.RemoteServer.Partial.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Metadata\Engine\Fundamental.h" />
+    <ClInclude Include="Metadata\Engine\Fundamental.Partial.h" />
+    <ClInclude Include="Metadata\Engine\Fundamental.Reflection.h" />
+    <ClInclude Include="Metadata\Game\Gui.h" />
+    <ClInclude Include="Metadata\Game\Gui.Partial.h" />
+    <ClInclude Include="Metadata\Game\Gui.Reflection.h" />
+    <ClInclude Include="Metadata\Game\Project.h" />
+    <ClInclude Include="Metadata\Game\Project.Partial.h" />
+    <ClInclude Include="Metadata\Game\Project.Reflection.h" />
+    <ClInclude Include="Metadata\Game\ProjectGlobals.h" />
+    <ClInclude Include="Metadata\Game\ProjectGlobals.Partial.h" />
+    <ClInclude Include="Metadata\Game\ProjectGlobals.Reflection.h" />
+    <ClInclude Include="Metadata\Game\ProjectGui.h" />
+    <ClInclude Include="Metadata\Game\ProjectGui.Partial.h" />
+    <ClInclude Include="Metadata\Game\ProjectGui.Reflection.h" />
+    <ClInclude Include="Metadata\Game\ProjectLevels.h" />
+    <ClInclude Include="Metadata\Game\ProjectLevels.Partial.h" />
+    <ClInclude Include="Metadata\Game\ProjectLevels.Reflection.h" />
+    <ClInclude Include="Metadata\Game\Scene.h" />
+    <ClInclude Include="Metadata\Game\Scene.Lua.h" />
+    <ClInclude Include="Metadata\Game\Scene.Partial.h" />
+    <ClInclude Include="Metadata\Game\Scene.Reflection.h" />
+    <ClInclude Include="MetaMetadata\MetaClasses.h" />
+    <ClInclude Include="MetaMetadata\MetaClasses.Partial.h" />
+    <ClInclude Include="MetaMetadata\MetaFunction.h" />
+    <ClInclude Include="MetaMetadata\MetaFunction.Partial.h" />
+    <ClInclude Include="MetaMetadata\MetaFundamental.h" />
+    <ClInclude Include="MetaMetadata\MetaFundamental.Partial.h" />
+    <ClInclude Include="MetaMetadata\MetaPrimitives.h" />
+    <ClInclude Include="MetaMetadata\MetaPrimitives.Partial.h" />
+    <ClInclude Include="MetaMetadata\MetaProject.h" />
+    <ClInclude Include="MetaMetadata\MetaProject.Partial.h" />
+    <ClInclude Include="Core.h" />
+    <ClInclude Include="CoreLua.h" />
+    <ClInclude Include="DataCpp.Lua.h" />
+    <ClInclude Include="DataCpp.Reflection.h" />
+    <ClInclude Include="DataCpp.RemoteServer.h" />
+    <ClInclude Include="DataCpp.RemoteServer.Partial.h" />
+    <ClInclude Include="Reflection.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

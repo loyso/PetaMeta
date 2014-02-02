@@ -1,0 +1,454 @@
+﻿<#
+	{
+		CsRemotingCore core = new CsRemotingCore( project );
+		core.Output.File = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile ) + ".Remoting.cs";
+		core.Output.Project = csOutputProject;
+		core.Render();
+	}
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		if ( metadataFile.Content.Classes.GetEnumerator().MoveNext() )
+		{	
+			CsRemoting file = new CsRemoting( this, project, metadataFile );
+			file.Output.File = metadataFile.RelativeName + ".Remoting.cs";
+			file.Output.Project = csOutputProject;
+			file.Render();
+		}
+	}
+#>
+<#+
+public class CsRemotingCore : Template
+{
+	protected MetadataProject Project;
+	
+	public CsRemotingCore( MetadataProject project )
+	{
+		Project = project;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace <#= Project.CoreNamespace #>
+{
+	public partial class Remoting
+	{
+	}
+} // // namespace <#= Project.CoreNamespace #>
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+} // HierarchyRemotingCore
+#>
+<#+
+public class CsRemoting : Template
+{
+	protected GeneratedTextTransformation TextTransformation;
+	protected MetadataProject	Project;
+	protected MetadataFile		File;
+	
+	public CsRemoting( GeneratedTextTransformation textTransformation, MetadataProject project, MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections.Generic;
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine("");
+			PushIndent("\t");
+		}
+
+		foreach( MetadataClass c in File.Content.Classes )
+		{
+			if ( c.UserDefined )
+				continue;
+		
+			if ( c is CollectionClass && c.IsReferenced )
+				TextTransformation.Error( "Collection " + c.QualifiedTypeName + ": referenced collection classes are not allowed for now");
+		
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + c.Namespace );
+				WriteLine( "{" );
+				PushIndent("\t");
+			}
+			
+			string baseDeclaration = "";
+			string functionModifier = "override ";
+			if ( c.BaseClass == null  )
+			{
+				baseDeclaration = " : core.IRemoteObject";
+				functionModifier = "virtual ";
+			}
+
+			string classModifiers = "public";
+			if ( c is AbstractClass )
+				classModifiers += " abstract";
+			classModifiers += " partial";					
+			
+			WriteLine( classModifiers + " class " + c.TypeName + baseDeclaration );
+			WriteLine( "{" );
+			PushIndent("\t");
+			
+			if ( c.BaseClass == null )
+			{
+#>
+public bool IsRemoteUploaded
+{
+	get { return isRemoteUploaded; }
+}
+protected bool isRemoteUploaded = false;
+
+void core.IRemoteObject.RemoteCreate()  { RemoteCreate(); }
+void core.IRemoteObject.RemoteDestroy() { RemoteDestroy(); }
+void core.IRemoteObject.RemoteUpload()  { RemoteUpload(); }
+void core.IRemoteObject.RemoteUnload()  { RemoteUnload(); }
+bool core.IRemoteObject.IsRemoteUploaded { get { return IsRemoteUploaded; } }
+
+<#+
+			}
+#>
+public <#=functionModifier#>void RemoteCreate() 
+{
+	if ( IsRemoteUploaded )
+		return;
+	
+<#+
+			if ( c.IsReferenced || c is ProjectClass || c is FileClass || c is FolderClass )
+			{
+#>
+	<#=Project.CoreNamespace#>.Remoting.NewObject( <#=c.TypeName#>_Reflection.MetadataClass, this );
+<#+
+			}
+#>
+	
+	isRemoteUploaded = true;
+	RemoteCreate_Base();
+}	
+protected <#=functionModifier#>void RemoteCreate_Base() 
+{
+<#+
+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.RemoteCreate_Base();
+	
+<#+ 
+			}
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> remoteItem in this )
+		remoteItem.RemoteCreate();
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.RemoteCreate();
+<#+
+				}
+				else if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		<#= fileStorage.Name #>.RemoteCreate();
+<#+
+				}				
+				else if ( m is ParentReference )
+				{
+				}
+				else if ( m is Reference )
+				{
+				}
+				else if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental || value.Type is Enumeration )
+					{
+					}
+					else if ( value.Type is MetadataClass && !(value.Type as MetadataClass).UserDefined )
+					{						
+#>
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.RemoteCreate();
+<#+
+					}
+				}
+			}
+#>}
+
+public <#=functionModifier#>void RemoteDestroy() 
+{
+	if ( !IsRemoteUploaded )
+		return;
+		
+	RemoteDestroy_Base();
+
+<#+
+			if ( c.IsReferenced || c is ProjectClass || c is FileClass || c is FolderClass )
+			{
+#>
+	<#=Project.CoreNamespace#>.Remoting.DeleteObject( <#=c.TypeName#>_Reflection.MetadataClass, this );
+<#+
+			}
+#>
+
+	isRemoteUploaded = false;
+}	
+protected <#=functionModifier#>void RemoteDestroy_Base() 
+{
+<#+
+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.RemoteDestroy_Base();
+	
+<#+ 
+			}
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> remoteItem in this )
+		remoteItem.RemoteDestroy();
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.RemoteDestroy();
+<#+
+				}
+				else if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		<#= fileStorage.Name #>.RemoteDestroy();
+<#+
+				}				
+				else if ( m is ParentReference )
+				{
+				}
+				else if ( m is Reference )
+				{
+				}
+				else if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental || value.Type is Enumeration )
+					{
+					}
+					else if ( value.Type is MetadataClass && !(value.Type as MetadataClass).UserDefined )
+					{						
+#>
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.RemoteDestroy();
+<#+
+					}
+				}
+			}
+#>}
+
+public <#=functionModifier#>void RemoteUpload() 
+{
+	if ( !IsRemoteUploaded )
+		return;
+	RemoteUpload_Base();
+}	
+protected <#=functionModifier#>void RemoteUpload_Base() 
+{
+<#+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.RemoteUpload_Base();
+	
+<#+ 
+			}
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> remoteItem in this )
+		remoteItem.RemoteUpload();
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.RemoteUpload();
+<#+
+				}
+				else if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	<#=Project.CoreNamespace#>.Remoting.SetObject_FileStorage( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, <#=m.Name#> );
+	if ( <#=fileStorage.Name#> != null )	
+		<#=fileStorage.Name#>.RemoteUpload();
+<#+
+				}				
+				else if ( m is ParentReference )
+				{
+#>
+	<#=Project.CoreNamespace#>.Remoting.SetObject_ParentReference( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, <#=m.Name#> );
+<#+
+				}
+				else if ( m is Reference )
+				{
+#>
+	<#=Project.CoreNamespace#>.Remoting.SetObject_Reference( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, <#=m.Name#> );
+<#+
+				}
+				else if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental || value.Type is Enumeration )
+					{
+#>
+	<#=Project.CoreNamespace#>.Remoting.SetObject_Value( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, new <#=value.Type.QualifiedTypeName#>_Boxed { value = <#=m.Name#> } );
+<#+
+					}
+					else if ( value.Type is MetadataClass )
+					{						
+#>
+	<#=Project.CoreNamespace#>.Remoting.SetObject_Value( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, <#=m.Name#> );
+<#+
+						if ( !(value.Type as MetadataClass).UserDefined )
+						{
+#>
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.RemoteUpload();
+<#+
+						}
+					}
+				}
+			}
+#>}
+
+public <#=functionModifier#>void RemoteUnload() 
+{
+	if ( !IsRemoteUploaded )
+		return;
+	RemoteUnload_Base();
+}	
+protected <#=functionModifier#>void RemoteUnload_Base() 
+{
+<#+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.RemoteUnload_Base();
+	
+<#+ 
+			}
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> remoteItem in this )
+		remoteItem.RemoteUnload();
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.RemoteUnload();
+<#+
+				}
+				else if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		<#= fileStorage.Name #>.RemoteUnload();
+	<#=Project.CoreNamespace#>.Remoting.SetObject_FileStorage( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, null );		
+<#+
+				}				
+				else if ( m is ParentReference )
+				{
+#>
+	<#=Project.CoreNamespace#>.Remoting.SetObject_ParentReference( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, null );
+<#+
+				}
+				else if ( m is Reference )
+				{
+#>
+	<#=Project.CoreNamespace#>.Remoting.SetObject_Reference( <#=c.TypeName#>_Reflection.MetadataClass, this, <#=c.TypeName#>_Member_<#=m.Name#>.Member, null );
+<#+
+				}
+				else if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental || value.Type is Enumeration )
+					{
+					}
+					else if ( value.Type is MetadataClass && !(value.Type as MetadataClass).UserDefined )
+					{
+#>
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.RemoteUnload();
+<#+
+					}
+				}
+			}
+#>}
+<#+
+			PopIndent();
+			WriteLine( "}" );	
+
+			if ( c.Namespace.Length > 0 )
+			{
+				PopIndent();
+				WriteLine( "} // namespace " + c.Namespace );
+			}
+			
+			WriteLine("");	
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <ProjectClass Guid="56e8a41d-bf20-475f-aa07-0a512975f527" TypeName="Game">
+      <Members>
+        <Value Guid="17cf6cc9-44c8-4f8f-ac47-1b6093007641" Name="globals" Type="b5866822-9df5-4c77-abbc-ea49875fbedf" />
+        <Value Guid="76d80037-df45-4a70-97e5-d03b47c1b26f" Name="gui" Type="4e5f2dd2-3b2b-4c44-8620-262be737f924" />
+        <Value Guid="200e773c-0740-4dc1-ad0b-1d41d669f045" Name="levels" Type="daaf8113-6b58-48a3-a19e-94b9e6da3a74" />
+        <FunctionUser Guid="3491d868-eb38-4bdb-8e24-404a06714f29" Name="SetObjectValue_Server" Remote="Server" IsStatic="true" ExposeToLua="false">
+          <Arguments>
+            <ArgumentReference Name="metadataType" />
+            <ArgumentReference Name="metadataMember" />
+            <ArgumentReference Name="dataObject" />
+            <ArgumentValue Name="dataValue" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionUser Guid="0fbf300f-6504-4d20-841a-64d70eea4796" Name="SetObjectReference_Server" Remote="Server" IsStatic="true" ExposeToLua="false">
+          <Arguments>
+            <ArgumentReference Name="metadataType" />
+            <ArgumentReference Name="metadataMember" />
+            <ArgumentReference Name="dataObject" />
+            <ArgumentReference Name="referenceValue" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionUser Guid="d1c5f8b9-a077-40d2-8b14-37a2d6887af0" Name="SetObjectParentReference_Server" Remote="Server" IsStatic="true" ExposeToLua="false">
+          <Arguments>
+            <ArgumentReference Name="metadataType" />
+            <ArgumentReference Name="metadataMember" />
+            <ArgumentReference Name="dataObject" />
+            <ArgumentReference Name="referenceValue" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionUser Guid="7de35da6-b5c6-4c59-898d-674e50be4a93" Name="SetObjectFileStorage_Server" Remote="Server" IsStatic="true" ExposeToLua="false">
+          <Arguments>
+            <ArgumentReference Name="metadataType" />
+            <ArgumentReference Name="metadataMember" />
+            <ArgumentReference Name="dataObject" />
+            <ArgumentReference Name="referenceValue" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionUser Guid="f12e94f1-f3e1-4cc1-9fda-1fb7eaed0316" Name="NewObject_Server" Remote="Server" IsStatic="true" ExposeToLua="false">
+          <Arguments>
+            <ArgumentReference Name="metadataType" />
+            <ArgumentReference Name="dataObject" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionUser Guid="5f86a605-9657-4ed8-a312-3e67229df7e3" Name="DeleteObject_Server" Remote="Server" IsStatic="true" ExposeToLua="false">
+          <Arguments>
+            <ArgumentReference Name="metadataType" />
+            <ArgumentReference Name="dataObject" />
+          </Arguments>
+        </FunctionUser>
+      </Members>
+    </ProjectClass>
+  </Types>
+</MetadataFileContent>

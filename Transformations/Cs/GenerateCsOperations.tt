@@ -1,0 +1,462 @@
+﻿<#
+	{
+		CsOperationsCore core = new CsOperationsCore( project );
+		core.Output.File = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile ) + ".Operations.cs";
+		core.Output.Project = csOutputProject;
+		core.Render();
+	}
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		if ( metadataFile.Content.Classes.GetEnumerator().MoveNext() )
+		{	
+			CsOperations file = new CsOperations( project, metadataFile );
+			file.Output.File = metadataFile.RelativeName + ".Operations.cs";
+			file.Output.Project = csOutputProject;
+			file.Render();
+		}
+	}
+#>
+<#+
+public class CsOperationsCore : Template
+{
+	protected MetadataProject Project;
+	
+	public CsOperationsCore( MetadataProject project )
+	{
+		Project = project;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace <#= Project.CoreNamespace #>
+{
+} // // namespace <#= Project.CoreNamespace #>
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+} // CsOperationsCore
+#>
+<#+
+public class CsOperations : Template
+{
+	protected MetadataProject	Project;
+	protected MetadataFile		File;
+	
+	public CsOperations( MetadataProject project, MetadataFile file )
+	{
+		Project = project;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections.Generic;
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine("");
+			PushIndent("\t");
+		}
+
+		foreach( MetadataClass c in File.Content.Classes )
+		{
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + c.Namespace );
+				WriteLine( "{" );
+				PushIndent("\t");
+			}
+			
+			string baseDeclaration = "";
+			string functionModifier = "override";
+			if ( c.BaseClass == null )
+			{
+				baseDeclaration = " : core.IOperations";
+				functionModifier = "virtual";
+			}
+			
+			string classModifiers = "public";
+			if ( c is AbstractClass )
+				classModifiers += " abstract";
+			classModifiers += " partial";					
+			
+			WriteLine( classModifiers + " class " + c.TypeName + baseDeclaration );
+			WriteLine( "{" );
+			PushIndent("\t");
+			
+			if ( c.BaseClass == null )
+			{
+#>
+void core.IOperations.NewNames()		{ NewNames(); }
+void core.IOperations.NewGuids()		{ NewGuids(); }
+bool core.IOperations.ContainsObject( core.DataObject objectReference )	{ return ContainsObject( objectReference ); }
+void core.IOperations.ObjectDeleted( core.DataObject dataObject )		{ ObjectDeleted( dataObject ); }
+
+<#+
+			}
+#>
+public <#=functionModifier#> bool ContainsObject( core.DataObject objectReference ) 
+{
+<#+			if ( c.BaseClass != null ) 
+			{
+#>
+	if ( base.ContainsObject( objectReference ) )
+		return true;
+	
+<#+ 
+			}
+			else
+			{
+#>
+	if ( objectReference == this )
+		return true;
+
+<#+
+			}
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> item in this )
+		if ( item.ContainsObject( objectReference ) )
+			return true;
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	if ( <#= collection.Name #>.ContainsObject( objectReference ) )
+		return true;
+<#+
+				}
+				else if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		if ( <#= fileStorage.Name #>.ContainsObject( objectReference ) )
+			return true;
+<#+
+				}				
+				else if ( m is ParentReference )
+				{
+				}
+				else if ( m is Reference )
+				{
+					Reference reference = m as Reference;
+				}
+				else if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental || value.Type is Enumeration )
+					{
+					}
+					else if ( value.Type is MetadataClass )
+					{						
+#>
+	if ( <#=m.Name#> != null )
+		if ( <#=m.Name#>.ContainsObject( objectReference ) )
+			return true;
+<#+
+					}
+				}
+			}
+#>	
+	return false;
+}
+
+public <#=functionModifier#> void ObjectDeleted( core.DataObject dataObject ) 
+{
+<#+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.ObjectDeleted( dataObject );
+	
+<#+ 
+			}
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> remoteItem in this )
+		remoteItem.ObjectDeleted( dataObject );
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.ObjectDeleted( dataObject );
+<#+
+				}
+				else if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		<#= fileStorage.Name #>.ObjectDeleted( dataObject );
+<#+
+				}				
+				else if ( m is ParentReference )
+				{
+				}
+				else if ( m is Reference )
+				{
+					Reference reference = m as Reference;
+#>
+	if ( (dataObject as core.IOperations).ContainsObject( <#= reference.Name #> ) )
+		<#= reference.Name #> = null;
+<#+
+				}
+				else if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental || value.Type is Enumeration )
+					{
+					}
+					else if ( value.Type is MetadataClass )
+					{						
+#>
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.ObjectDeleted( dataObject );
+<#+
+					}
+				}
+			}
+#>}
+
+public <#=functionModifier#> void CopyObjectDataFrom( core.DataObject fromObject ) 
+{
+	CopyObjectDataFrom_Base( fromObject );
+}	
+protected <#=functionModifier#> void CopyObjectDataFrom_Base( core.DataObject fromObject ) 
+{
+<#+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.CopyObjectDataFrom_Base( fromObject );
+	
+<#+
+			}
+#>
+	if ( !(fromObject is <#= c.QualifiedTypeName #>) )
+		return;
+	
+	<#= c.QualifiedTypeName #> from = fromObject as <#= c.QualifiedTypeName #>;
+<#+
+			PushIndent("\t");
+			if ( c.IsReferenced || c is FolderClass || c is FileClass )
+			{
+#>
+this.Guid = from.Guid;
+<#+
+			}
+			if ( c is ProjectClass )
+			{
+#>
+this.ProjectName = from.ProjectName;
+this.ProjectPath = from.ProjectPath;
+<#+
+			}
+
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+				}
+				else if ( m is FileStorage )
+				{
+				}				
+				else if ( m is ParentReference )
+				{
+#>
+this.<#=m.Name#> = from.<#=m.Name#>;
+<#+
+				}
+				else if ( m is Reference )
+				{
+#>
+this.<#=m.Name#> = from.<#=m.Name#>;
+<#+
+				}
+				else if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental || value.Type is Enumeration )
+					{
+#>
+this.<#=m.Name#> = from.<#=m.Name#>;
+<#+
+					}
+					else if ( value.Type is MetadataClass )
+					{						
+#>
+<#=m.Name#>.CopyObjectDataFrom( from.<#=m.Name#> );
+<#+
+					}
+				}
+			}
+			PopIndent();
+#>
+}
+
+public <#=functionModifier#> void NewGuids()
+{
+<#+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.NewGuids();
+	
+<#+
+			}
+			else if ( c.IsReferenced || c is FolderClass || c is FileClass )
+			{
+#>
+	this.Guid = Guid.NewGuid();
+<#+
+			}
+#>
+<#+
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> item in this )
+		item.NewGuids();
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.NewGuids();
+<#+
+				}
+				if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		<#= fileStorage.Name #>.NewGuids();
+<#+
+				}
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is MetadataClass )
+					{
+#>
+	if ( <#= value.Name #> != null )
+		<#= value.Name #>.NewGuids();
+<#+
+					}
+				}
+			}
+#>
+}
+
+public <#=functionModifier#> void NewNames()
+{
+<#+			if ( c.BaseClass != null ) 
+			{
+#>
+	base.NewNames();
+	
+<#+
+			}
+#>
+<#+
+			foreach( Member m in c.Members )
+				if ( m is ValueName )
+				{
+					ValueName valueName = m as ValueName;
+#>
+	this.<#=valueName.Name#> = <#= valueName.DefaultValue.Length > 0 ? valueName.DefaultValue : "\"" + c.TypeName + "\"" #>;
+<#+
+				}
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> item in this )
+		item.NewNames();
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.NewNames();
+<#+
+				}
+				if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		<#= fileStorage.Name #>.NewNames();
+<#+
+				}
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is MetadataClass )
+					{
+#>
+	if ( <#= value.Name #> != null )
+		<#= value.Name #>.NewNames();
+<#+
+					}
+				}
+			}
+#>
+}
+<#+
+			PopIndent();
+			WriteLine( "}" );	
+
+			if ( c.Namespace.Length > 0 )
+			{
+				PopIndent();
+				WriteLine( "} // namespace " + c.Namespace );
+			}
+			
+			WriteLine("");	
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

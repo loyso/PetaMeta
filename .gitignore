@@ -1,0 +1,8 @@
+*.suo
+*.log
+*.vcxproj.user
+obj/
+/Bin
+/Garbage
+/Lib
+

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <FolderClass Guid="daaf8113-6b58-48a3-a19e-94b9e6da3a74" TypeName="Levels" IsReferenced="false">
+      <Members>
+        <ValueName Guid="2fccc80d-24cd-4f58-9f2c-19a1dee87f9b" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;Levels&quot;" DefaultValueXml="&quot;Levels&quot;" />
+        <Collection Guid="6d4f2370-78c6-4101-9cc7-0f28e4a18045" Name="folders" Type="e7cb809a-fa8f-4b52-9680-b18d03cb1a5e" />
+        <ParentReference Guid="26cd9e14-4865-41b4-b074-a63cb275af8d" Name="parent" Type="56e8a41d-bf20-475f-aa07-0a512975f527" />
+      </Members>
+    </FolderClass>
+    <FolderStorageClass Guid="65461cf1-2c85-4ab0-9ed8-7a951902236f" TypeName="LevelFolder">
+      <Members>
+        <ValueName Guid="52f0b117-c9c7-4825-967e-f12bcd128c45" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;Level&quot;" DefaultValueXml="&quot;Level&quot;" />
+        <ParentReference Guid="58361e6e-810c-4720-93fa-1ecc7307ea91" Name="parent" Type="daaf8113-6b58-48a3-a19e-94b9e6da3a74" />
+        <Collection Guid="2a19daa4-3fe7-4b9a-acca-22a584477e7f" Name="dependencies" Type="c5c17415-7309-489b-ae23-61f4ef69c532" />
+        <Collection Guid="b83ac6fc-4ebe-4bcf-8ede-c3ce3e2f67a4" Name="blocks" Type="4c2def93-2fcb-4c8f-851c-88aa2c98cfd4" />
+      </Members>
+    </FolderStorageClass>
+    <CollectionClass Guid="e7cb809a-fa8f-4b52-9680-b18d03cb1a5e" TypeName="LevelFoldersCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>65461cf1-2c85-4ab0-9ed8-7a951902236f</ItemsClass>
+      <IsPolymorphic>true</IsPolymorphic>
+    </CollectionClass>
+    <FolderClass Guid="77924162-cb05-4f79-969e-6854a43ae1c8" TypeName="LevelBlock" IsReferenced="false">
+      <Members>
+        <ValueName Guid="8b004694-164b-4678-b912-2ca3b24fe8b7" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;Block&quot;" DefaultValueXml="&quot;Block&quot;" />
+        <ParentReference Guid="8c862cca-79fa-436d-a320-66ee7e3bc936" Name="parent" Type="65461cf1-2c85-4ab0-9ed8-7a951902236f" />
+        <Collection Guid="084f1b7f-89f2-4f03-8dff-14fec74b1fc9" Name="files" Type="17a293e5-b01a-4095-b5f7-17d74a0c9b8b" />
+      </Members>
+    </FolderClass>
+    <CollectionClass Guid="4c2def93-2fcb-4c8f-851c-88aa2c98cfd4" TypeName="LevelBlocksCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>77924162-cb05-4f79-969e-6854a43ae1c8</ItemsClass>
+    </CollectionClass>
+    <FileClass Guid="5a4f1500-59c4-430c-89ac-fa1fdfa88e46" TypeName="LevelFile" IsReferenced="false" FileExtension="level">
+      <Members>
+        <ParentReference Guid="33d91469-0caa-4708-a19c-d647c0b41ff0" Name="parent" Type="77924162-cb05-4f79-969e-6854a43ae1c8" />
+        <FileStorage Guid="e502c1ab-993e-4d66-9366-a4eca621be55" Name="scene" Type="20df3bc1-db3d-443e-9cff-b4f14426f1be" />
+        <ValueName Guid="784e344b-a1c4-4ce8-8faf-f40e1c3562a2" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;File&quot;" DefaultValueXml="&quot;File&quot;" />
+      </Members>
+    </FileClass>
+    <CollectionClass Guid="17a293e5-b01a-4095-b5f7-17d74a0c9b8b" TypeName="LevelFilesCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>5a4f1500-59c4-430c-89ac-fa1fdfa88e46</ItemsClass>
+    </CollectionClass>
+    <MetadataClass Guid="2956cd4f-619d-4fc7-bfc4-84722fd742d5" TypeName="Dependency">
+      <Members>
+        <Reference Guid="cd7d237b-6fe5-4deb-8da2-415994aeec66" Name="LevelFolder" Type="65461cf1-2c85-4ab0-9ed8-7a951902236f" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <CollectionClass Guid="c5c17415-7309-489b-ae23-61f4ef69c532" TypeName="Dependencies" IsReferenced="false">
+      <Members />
+      <ItemsClass>2956cd4f-619d-4fc7-bfc4-84722fd742d5</ItemsClass>
+    </CollectionClass>
+  </Types>
+</MetadataFileContent>

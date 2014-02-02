@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Core"
+	>
+	<UserMacro
+		Name="CORE_ARCH"
+		Value="CORE_ARCH_LIT_ENDIAN"
+	/>
+	<UserMacro
+		Name="CORE_INT64"
+		Value="CORE_HAVE_INT64"
+	/>
+</VisualStudioPropertySheet>

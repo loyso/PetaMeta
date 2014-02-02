@@ -1,0 +1,30 @@
+﻿<#@ template hostspecific="True" debug="true" #>
+<#@ assembly name="$(SolutionDir)Bin\Debug\Metadata.dll" #>
+<#@ import namespace="metadata" #>
+<#@ include file="T4Toolbox.tt" #>
+<#@ output extension=".log" #>
+<#
+	metadata.MetadataProject project = null;
+	try
+	{
+		project = project.ProjectLoad( Host.ResolvePath(@"..\Media\Game" + project.ProjectExtension() ) );
+		project.Load();
+	}
+	catch( core.ReferencesFixupException e )
+	{
+		Error( "ReferencesFixupException, Guid=" + e.Guid.ToString() );
+	}
+	catch ( core.TreePathException e )
+	{
+		Error( "TreePathException, Path=" + e.Path.ToString() );
+	}
+	const string cppReflectionNamespace = "reflection";	
+	const string cppOutputProject = @"..\DataCpp\DataCpp.vcxproj";
+	const string cppClassesQualifier = "";
+#>
+<#@ include file="..\Transformations\Cpp\GenerateCppPartial.tt" #>
+<#@ include file="..\Transformations\Cpp\GenerateCppLua.tt" #>
+<#@ include file="..\Transformations\Cpp\GenerateCppReflection.tt" #>
+<#@ include file="..\Transformations\Cpp\GenerateCppRemoteServer.tt" #>
+
+

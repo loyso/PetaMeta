@@ -1,0 +1,27 @@
+﻿<#@ template hostspecific="True" debug="true" #>
+<#@ assembly name="$(SolutionDir)Bin\Debug\Metadata.dll" #>
+<#@ import namespace="metadata" #>
+<#@ include file="T4Toolbox.tt" #>
+<#@ output extension=".log" #>
+<#
+	metadata.MetadataProject project = null;
+	try
+	{
+		project = project.ProjectLoad( Host.ResolvePath(@"..\Media\Game" + project.ProjectExtension() ) );
+		project.Load();
+	}
+	catch( core.ReferencesFixupException e )
+	{
+		Error( "ReferencesFixupException, Guid=" + e.Guid.ToString() );
+	}
+	catch ( core.TreePathException e )
+	{
+		Error( "TreePathException, Path=" + e.Path.ToString() );
+	}
+	const string csOutputProject = @"LegacyDataCs.csproj";
+#>
+<#@ include file="..\Transformations\Cs\GenerateCsPartial.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsSerializationSimple.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsOperations.tt" #>
+
+

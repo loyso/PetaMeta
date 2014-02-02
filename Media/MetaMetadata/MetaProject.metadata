@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <FileClass Guid="da5e4e32-fc11-454b-8c7b-34a453d1ffed" TypeName="MetadataFile" IsReferenced="false" FileExtension="metadata">
+      <Members>
+        <ValueName Guid="40c5fc75-12a2-4b81-8686-981b12a7e9be" Name="Name" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;File&quot;" DefaultValueXml="&quot;File&quot;" />
+        <ParentReference Guid="fb926e45-efd3-4dd7-8ba8-5c18717d00a8" Name="Parent" Type="fdae07a3-a01f-4f19-aecd-ac46888ee9f0" />
+        <Value Guid="749c41eb-d51d-4be8-83f3-27a26301fb78" Name="Namespace" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;&quot;" DefaultValueXml="&quot;&quot;" />
+        <FileStorage Guid="be67ee31-77d2-451a-bbfe-4ffee545c0a7" Name="Content" Type="b384de55-3889-4e3b-a383-7c3cf264f21e" />
+        <Value Guid="59016daa-e550-4335-a946-a23fe745c622" Name="GenerateGui" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="true" DefaultValueXml="true" />
+        <Value Guid="627f6578-a043-44e5-8ab2-7df048162bc8" Name="GenerateSerialization" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="true" DefaultValueXml="true" />
+      </Members>
+    </FileClass>
+    <CollectionClass Guid="c3c8a43b-6553-454e-9ff1-874a6f8317cd" TypeName="MetadataFilesCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>da5e4e32-fc11-454b-8c7b-34a453d1ffed</ItemsClass>
+    </CollectionClass>
+    <FolderClass Guid="fdae07a3-a01f-4f19-aecd-ac46888ee9f0" TypeName="MetadataFolder" IsReferenced="false">
+      <Members>
+        <ValueName Guid="737ad454-9429-4bd0-8c89-a9980b746e71" Name="Name" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;Folder&quot;" DefaultValueXml="&quot;Folder&quot;" />
+        <ParentReference Guid="3590dbb4-bf34-4437-8e27-8118028bb7df" Name="Parent" Type="fdae07a3-a01f-4f19-aecd-ac46888ee9f0" />
+        <ParentReference Guid="af9735e8-df42-47fc-b2d4-23a2fe047e9b" Name="ParentProject" Type="a74d246d-531b-47a5-9b8b-6e70ef084512" />
+        <Value Guid="5993f831-c2e9-44a2-8064-d314a9d13e5e" Name="Namespace" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;&quot;" DefaultValueXml="&quot;&quot;" />
+        <Collection Guid="d132f0fe-b51a-449b-9083-8e73bb8bd49d" Name="Folders" Type="fd8f5b5c-3473-425e-b6ef-119092c806a7" />
+        <Collection Guid="f5a50e4e-431f-4651-93bc-2412223199a1" Name="Files" Type="c3c8a43b-6553-454e-9ff1-874a6f8317cd" />
+      </Members>
+    </FolderClass>
+    <CollectionClass Guid="fd8f5b5c-3473-425e-b6ef-119092c806a7" TypeName="MetadataFoldersCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>fdae07a3-a01f-4f19-aecd-ac46888ee9f0</ItemsClass>
+    </CollectionClass>
+    <MetadataClass Guid="bf34598e-f132-4f56-859d-c177ad0e3d10" TypeName="MetadataMemberGroup">
+      <Members>
+        <ValueName Guid="9ad0c408-1821-495e-9e58-a25cf2420f2f" Name="Name" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;Group&quot;" DefaultValueXml="&quot;Group&quot;" />
+        <Value Guid="1fc96052-245c-4490-9df4-e06ed302f361" Name="PartialFileExtension" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <CollectionClass Guid="49a20a44-2364-4909-b220-96f558fbc149" TypeName="MemberGroupsCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>bf34598e-f132-4f56-859d-c177ad0e3d10</ItemsClass>
+    </CollectionClass>
+    <ProjectClass Guid="a74d246d-531b-47a5-9b8b-6e70ef084512" TypeName="MetadataProject" IsReferenced="false" FileExtension="metaproj">
+      <Members>
+        <Value Guid="61b2b727-3954-4be3-9db2-266cc9cd45d1" Name="CoreNamespace" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;core&quot;" DefaultValueXml="&quot;core&quot;" />
+        <Value Guid="52386c9d-f75b-4c26-8fd1-2400e70154aa" Name="Metadata" Type="fdae07a3-a01f-4f19-aecd-ac46888ee9f0" />
+        <Collection Guid="962d3db7-f2cb-4ce8-b93e-d4400c3ab46c" Name="MemberGroups" Type="49a20a44-2364-4909-b220-96f558fbc149" />
+      </Members>
+    </ProjectClass>
+  </Types>
+</MetadataFileContent>

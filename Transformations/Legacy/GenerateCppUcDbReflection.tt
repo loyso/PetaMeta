@@ -1,0 +1,833 @@
+<#@ assembly name="System.Core.dll" #>
+<#
+	{
+		string cppOutputReflection = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile );
+		string cppRootLibraryName = System.IO.Path.GetFileNameWithoutExtension ( cppOutputProject );
+
+		ReflectionCoreHppFileGeneration reflectionCoreHppFileGeneration = new ReflectionCoreHppFileGeneration( this, project, cppOutputReflection, cppReflectionNamespace );
+		reflectionCoreHppFileGeneration.Output.File = cppOutputReflection + ".Reflection.h";
+		reflectionCoreHppFileGeneration.Output.Project = cppOutputProject;
+		reflectionCoreHppFileGeneration.Render();
+		
+		ReflectionCoreCppFileGeneration reflectionCoreCppFileGeneration = new ReflectionCoreCppFileGeneration( this, project, cppOutputReflection, cppReflectionNamespace );
+		reflectionCoreCppFileGeneration.Output.File = cppOutputReflection + ".Reflection.cpp";
+		reflectionCoreCppFileGeneration.Output.Project = cppOutputProject;
+		reflectionCoreCppFileGeneration.Render();
+		
+		foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+		{
+			HppReflectionFileGeneration hppReflectionFileGeneration = new HppReflectionFileGeneration( this, project, cppClassesQualifier, cppReflectionNamespace, metadataFile );
+			hppReflectionFileGeneration.Output.File = metadataFile.RelativeName + ".Reflection.h";
+			hppReflectionFileGeneration.Output.Project = cppOutputProject;
+			hppReflectionFileGeneration.Render();
+
+			CppReflectionFileGeneration cppReflectionFileGeneration = new CppReflectionFileGeneration( this, project, cppReflectionNamespace, metadataFile );
+			cppReflectionFileGeneration.Output.File = metadataFile.RelativeName + ".Reflection.cpp";
+			cppReflectionFileGeneration.Output.Project = cppOutputProject;
+			cppReflectionFileGeneration.Render();
+		}
+	}
+#>
+<#+
+public class ReflectionCoreHppFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppOutputReflection;
+	protected string							CppReflectionNamespace;
+	
+	public ReflectionCoreHppFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppOutputReflection, string cppReflectionNamespace )
+	{
+		TextTransformation = textTransformation;
+		CppOutputReflection = cppOutputReflection;
+		CppReflectionNamespace = cppReflectionNamespace;
+		Project = project;
+	}
+	
+	public override string TransformText()
+	{
+#>
+#ifndef <#=CppOutputReflection#>_Reflection_h
+#define <#=CppOutputReflection#>_Reflection_h
+
+#include "Reflection.h"
+
+namespace <#=Project.CoreNamespace#> {
+
+namespace Reflection
+{
+	void Init();
+	void Done();
+
+	bool FindObject( core::Guid const & guid, core::ReferenceObject * & pReferenceObject );
+
+	bool FindMetadataClass( core::Guid const & guid, <#=CppReflectionNamespace#>::MetadataClass * & pMetadataClass );
+	
+	bool FindMemberFunction( core::Guid const & guid, <#=CppReflectionNamespace#>::Function * & pMemberFunction );
+	bool FindMemberValue( core::Guid const & guid, <#=CppReflectionNamespace#>::Value * & pMemberValue );
+}
+
+
+} // namespace <#=Project.CoreNamespace#>
+
+#endif // <#=CppOutputReflection#>_Reflection_h
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+<#+
+public class ReflectionCoreCppFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppOutputReflection;
+	protected string							CppReflectionNamespace;
+	
+	public ReflectionCoreCppFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppOutputReflection, string cppReflectionNamespace )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppOutputReflection = cppOutputReflection;
+		CppReflectionNamespace = cppReflectionNamespace;
+	}
+	
+	public override string TransformText()
+	{
+#>
+#include "<#=CppOutputReflection#>.Reflection.h"
+
+<#+
+		foreach( MetadataFile metadataFile in Project.Metadata.FilesRecursive )
+		{
+#>
+#include "<#=metadataFile.RelativeName#>.Reflection.h"
+<#+
+		}
+#>
+
+namespace <#=Project.CoreNamespace#> {
+
+struct ReflectionData
+{
+	typedef core::Dictionary< core::Guid, core::ReferenceObject * > GuidToObject_t;
+	GuidToObject_t GuidToObject;
+
+	typedef core::List< <#=CppReflectionNamespace#>::MetadataClass * > MetadataClasses_t;
+	MetadataClasses_t MetadataClasses;
+};
+
+ReflectionData * gThis = NULL;
+
+void Reflection::Init()
+{
+	CORE_ASSERT( gThis == NULL );
+	gThis = CORE_NEW ReflectionData();
+	
+	<#=CppReflectionNamespace#>::MetadataClass * pMetadataClass = NULL;
+	
+<#+
+		foreach( MetadataFile metadataFile in Project.Metadata.FilesRecursive )
+		{
+			foreach( MetadataClass metadataClass in metadataFile.Content.Classes )
+			{
+#>
+	pMetadataClass = CORE_NEW <#=metadataClass.QualifiedTypeNameCpp#>_Reflection();
+	gThis->MetadataClasses.Add( pMetadataClass );
+	gThis->GuidToObject.Add( pMetadataClass->Get_Guid(), pMetadataClass );
+	for ( <#=CppReflectionNamespace#>::MembersCollection_Partial::ConstIterator i = pMetadataClass->Get_Members().Begin(), e = pMetadataClass->Get_Members().End(); i!=e; ++i )
+	{
+		<#=CppReflectionNamespace#>::Member & member = **i;
+		gThis->GuidToObject.Add( member.Get_Guid(), &member );
+	}
+<#+
+			}
+		}
+#>
+}
+
+void Reflection::Done()
+{
+	CORE_ASSERT( gThis );
+	
+	gThis->GuidToObject.Clear();
+	
+	for ( ReflectionData::MetadataClasses_t::ConstIterator i = gThis->MetadataClasses.Begin(), e = gThis->MetadataClasses.End(); i != e; ++i )
+		CORE_DELETE *i;
+	gThis->MetadataClasses.Clear();
+	
+	CORE_DELETE gThis;
+	gThis = NULL;
+}
+
+bool Reflection::FindObject( core::Guid const & guid, core::ReferenceObject * & pReferenceObject )
+{
+	CORE_ASSERT( gThis );
+	return gThis->GuidToObject.TryGetValue( guid, pReferenceObject );
+}
+
+bool Reflection::FindMetadataClass( core::Guid const & guid, <#=CppReflectionNamespace#>::MetadataClass * & pMetadataClass )
+{
+	core::ReferenceObject * pReferenceObject = NULL;
+	if ( !FindObject( guid, pReferenceObject ) )
+		return false;
+	pMetadataClass = core::polymorphic_cast< <#=CppReflectionNamespace#>::MetadataClass * >( pReferenceObject );
+	return pMetadataClass != NULL;
+}
+
+bool Reflection::FindMemberFunction( core::Guid const & guid, <#=CppReflectionNamespace#>::Function * & pMemberFunction )
+{
+	core::ReferenceObject * pReferenceObject = NULL;
+	if ( !FindObject( guid, pReferenceObject ) )
+		return false;
+	pMemberFunction = core::polymorphic_cast< <#=CppReflectionNamespace#>::Function * >( pReferenceObject );
+	return pMemberFunction != NULL;
+}
+
+bool Reflection::FindMemberValue( core::Guid const & guid, <#=CppReflectionNamespace#>::Value * & pMemberValue )
+{
+	core::ReferenceObject * pReferenceObject = NULL;
+	if ( !FindObject( guid, pReferenceObject ) )
+		return false;
+	pMemberValue = core::polymorphic_cast< <#=CppReflectionNamespace#>::Value * >( pReferenceObject );
+	return pMemberValue != NULL;
+}
+
+} // namespace <#=Project.CoreNamespace#>
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+<#+
+public class HppReflectionFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppClassesQualifier;
+	protected string							CppReflectionNamespace;
+	protected metadata.MetadataFile				File;
+	
+	public HppReflectionFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppClassesQualifier, string cppReflectionNamespace, metadata.MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppClassesQualifier = cppClassesQualifier;
+		CppReflectionNamespace = cppReflectionNamespace;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+
+// AUTOGENERATED FILE. MODIFY IT AT YOUR OWN RISK.
+
+#ifndef <#=File.RelativeName.Replace( @"\", "_" )#>_Reflection_h
+#define <#=File.RelativeName.Replace( @"\", "_" )#>_Reflection_h
+
+#include "<#= File.RelativePathToProj #>Config.h"
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			PushIndent("\t");
+			WriteLine( "" );
+		}
+#>
+// forward declarations
+<#+
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( metadataClass.Namespace.Length > 0 )
+				WriteLine( "namespace " + metadataClass.Namespace + "{" );
+				
+			if ( metadataClass is CollectionClass )
+			{
+			}
+			else
+			{
+#>
+class <#=metadataClass.TypeName#>;
+<#+
+			}
+			
+			if ( metadataClass.Namespace.Length > 0 )
+				WriteLine( "}" );
+		}
+#>
+
+// reflection classes
+
+<#+
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + metadataClass.Namespace );
+				WriteLine( "{" );
+				WriteLine( "" );
+			}
+			
+			string metadataClassQualifiedTypeNameCpp = metadataClass.QualifiedTypeNameCpp;
+			if ( metadataClass is CollectionClass )
+				metadataClassQualifiedTypeNameCpp += "_Partial";
+				
+			string baseClass = metadataClass.GetType().Name;
+#>
+class <#=CppClassesQualifier#><#=metadataClass.TypeName#>_Reflection : public <#=CppReflectionNamespace#>::<#=baseClass#>
+{
+public:
+	<#=metadataClass.TypeName#>_Reflection();
+	
+<#+
+			if ( metadataClass.IsReferenced )
+			{
+#>
+	virtual core::ReferenceObject * New() const;
+	virtual void Delete( core::ReferenceObject * pDataObject ) const;
+<#+
+			}
+#>
+};
+<#+
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "" );
+				WriteLine( "} // namespace " + metadataClass.Namespace );
+			}
+
+			WriteLine( "" );
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+#>
+
+#endif // <#=File.RelativeName.Replace( @"\", "_" )#>_Reflection_h
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+<#+
+public class CppReflectionFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppReflectionNamespace;
+	protected metadata.MetadataFile				File;
+	
+	public CppReflectionFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppReflectionNamespace, metadata.MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppReflectionNamespace = cppReflectionNamespace;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+
+// AUTOGENERATED FILE. MODIFY IT AT YOUR OWN RISK.
+
+#include "<#=File.Name#>.h"
+
+#include "<#=File.RelativePathToProj#>Reflection.h"
+
+#include "<#=File.Name#>.Reflection.h"
+
+// depends on parent/reference files
+<#+
+		var DependsOnFiles = new System.Collections.Generic.HashSet < MetadataFile >();
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			foreach( Member m in metadataClass.Members )
+			{
+				MetadataClass valueClass = null;
+				if ( m is ParentReference )
+					valueClass = (m as ParentReference).Type;
+				if ( m is Reference )
+					valueClass = (m as Reference).Type;
+
+				if ( valueClass != null && !File.Content.Types.Contains( valueClass ) )
+					DependsOnFiles.Add( valueClass.Parent.Parent );					
+			}
+		}
+		foreach( MetadataFile metadataFile in DependsOnFiles )
+		{
+#>
+#include "<#= File.RelativePathFor( metadataFile ) + metadataFile.Name #>.h"
+<#+
+		}
+#>
+// depends on reflection files
+<#+
+		var DependsOnReflectionFiles = new System.Collections.Generic.HashSet < MetadataFile >();
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			foreach( Member m in metadataClass.Members )
+			{
+				metadata.Type valueType = null;
+				if ( m is Value )
+				{
+					Value value = m as Value;
+					if ( value.AggregateByValue )
+						valueType = value.Type;
+				}
+
+				if ( valueType != null && !File.Content.Types.Contains( valueType ) )
+					DependsOnReflectionFiles.Add( valueType.Parent.Parent );					
+			}
+		}	
+		foreach( MetadataFile metadataFile in DependsOnReflectionFiles )
+		{
+#>
+#include "<#= File.RelativePathFor( metadataFile ) + metadataFile.Name #>.Reflection.h"
+<#+
+		}
+		
+		WriteLine("");
+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine( "" );
+		}
+
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + metadataClass.Namespace );
+				WriteLine( "{" );
+				WriteLine( "" );
+			}
+			
+			foreach( Member member in metadataClass.Members )
+			{
+				string baseClass = member.GetType().Name;
+#>
+class <#=metadataClass.TypeName#>_Member_<#=member.Name#> : public <#=CppReflectionNamespace#>::<#=baseClass#>
+{
+public:
+	<#=metadataClass.TypeName#>_Member_<#=member.Name#>()
+	{
+		Set_Guid("<#=member.Guid.ToString()#>");
+		Set_Name("<#=member.Name#>");
+	}
+<#+				
+				MetadataClass memberPointer = null;
+				if ( member is FileStorage )
+					memberPointer = (member as FileStorage).Type;
+				if ( member is Reference )
+					memberPointer = (member as Reference).Type;
+				if ( member is ParentReference )
+					memberPointer = (member as ParentReference).Type;
+
+				if ( member is Collection )
+				{
+					Collection collection = member as Collection;
+#>
+<#+
+				}
+				else if ( memberPointer != null )
+				{
+#>
+	virtual bool SetObjectValue( core::DataObject & ThisUnityped, core::DataObject * pDataObjectUnityped ) const
+	{
+		<#=metadataClass.QualifiedTypeNameCpp#> * pThis = core::polymorphic_downcast< <#=metadataClass.QualifiedTypeNameCpp#> * >( &ThisUnityped );
+		if ( !pThis )
+			return false;
+			
+		<#=memberPointer.QualifiedTypeNameCpp#> * pDataObject = NULL;			
+		if ( pDataObjectUnityped )
+		{
+			pDataObject = core::polymorphic_downcast< <#=memberPointer.QualifiedTypeNameCpp#> * >( pDataObjectUnityped );
+			if ( !pDataObject )
+				return false;
+		}		
+		pThis-><#=member.Name#> = pDataObject;
+		return true;	
+	}
+	virtual bool GetObjectValue( core::DataObject const & ThisUnityped, core::DataObject * & pDataObjectUnityped ) const
+	{
+		<#=metadataClass.QualifiedTypeNameCpp#> const * pThis = core::polymorphic_downcast< <#=metadataClass.QualifiedTypeNameCpp#> const * >( &ThisUnityped );
+		if ( !pThis )
+			return false;
+		pDataObjectUnityped = pThis-><#=member.Name#>;
+		return true;	
+	}
+<#+
+				}
+				else if ( member is Value )
+				{
+					Value value = member as Value;
+#>
+	virtual bool SetObjectValue( core::DataObject & ThisUnityped, core::DataObject * pDataObjectUnityped ) const
+	{
+		<#=metadataClass.QualifiedTypeNameCpp#> * pThis = core::polymorphic_downcast< <#=metadataClass.QualifiedTypeNameCpp#> * >( &ThisUnityped );
+		if ( !pThis )
+			return false;
+<#+
+					if ( value.Type is Fundamental || value.Type is Enumeration || ( value.Type is MetadataClass && (value.Type as MetadataClass).UserDefined )  )
+					{
+#>
+		<#=value.Type.QualifiedTypeNameCpp#>_Boxed const * pDataObject = core::polymorphic_downcast < <#=value.Type.QualifiedTypeNameCpp#>_Boxed const * > ( pDataObjectUnityped );
+		if ( !pDataObject )
+			return false;
+<#+
+						if ( metadataClass.UserDefined )
+						{
+#>
+		pThis-><#=member.Name#> = pDataObject->value;
+<#+
+						}
+						else
+						{
+#>
+		pThis-><#=member.Name#> = pDataObject->value;
+<#+
+						}
+					}
+					else
+					{
+#>
+		<#=value.Type.QualifiedTypeNameCpp#> const * pDataObject = core::polymorphic_downcast < <#=value.Type.QualifiedTypeNameCpp#> const * > ( pDataObjectUnityped );
+		if ( !pDataObject )
+			return false;
+<#+
+						if ( metadataClass.UserDefined )
+						{
+#>
+		pThis-><#=member.Name#> = *pDataObject;
+<#+
+						}
+						else
+						{
+#>
+		pThis-><#=member.Name#> = *pDataObject;
+<#+
+						}
+					}
+#>
+		return true;
+	}
+	virtual bool GetObjectValue( core::DataObject const & ThisUnityped, core::DataObject * & pDataObjectUnityped ) const
+	{
+		<#=metadataClass.QualifiedTypeNameCpp#> const * pThis = core::polymorphic_downcast< <#=metadataClass.QualifiedTypeNameCpp#> const * >( &ThisUnityped );
+		if ( !pThis )
+			return false;
+<#+
+					if ( value.Type is Fundamental || value.Type is Enumeration || ( value.Type is MetadataClass && (value.Type as MetadataClass).UserDefined )  )
+					{
+#>
+		<#=value.Type.QualifiedTypeNameCpp#>_Boxed * pDataObject = CORE_NEW <#=value.Type.QualifiedTypeNameCpp#>_Boxed();
+<#+
+						if ( metadataClass.UserDefined )
+						{
+#>
+		pDataObject->value = pThis-><#=member.Name#>;
+<#+
+						}
+						else
+						{
+#>
+		pDataObject->value = pThis-><#=member.Name#>;
+<#+
+						}
+					}
+					else
+					{
+#>
+		<#=value.Type.QualifiedTypeNameCpp#> * pDataObject = CORE_NEW <#=value.Type.QualifiedTypeNameCpp#>();
+<#+
+						if ( metadataClass.UserDefined )
+						{
+#>
+		*pDataObject = pThis-><#=member.Name#>;
+<#+
+						}
+						else
+						{
+#>
+		*pDataObject = pThis-><#=member.Name#>;
+<#+
+						}
+					}
+#>
+		pDataObjectUnityped = pDataObject;
+		return true;
+	}
+	virtual bool SetObjectValue_FromByteStream( core::DataObject & ThisUnityped, core::ByteStreamReader & stream ) const
+	{
+		<#=metadataClass.QualifiedTypeNameCpp#> * pThis = core::polymorphic_downcast< <#=metadataClass.QualifiedTypeNameCpp#> * >( &ThisUnityped );
+		if ( !pThis )
+			return false;
+<#+
+					if ( value.Type is MetadataClass )
+					{
+#>
+		<#=value.Type.QualifiedTypeNameCpp#> value; if ( !<#=value.Type.QualifiedTypeNameCpp#>_ByteStream::ObjectFromByteStream( stream, value ) ) return false;
+<#+
+					}
+					else if ( value.Type is Enumeration )
+					{
+#>
+		<#=value.Type.QualifiedTypeNameCpp#>::Enum value; if ( !stream.ReadEnum( value ) ) return false;
+<#+
+					}
+					else if ( value.Type is FundamentalInt )
+					{
+#>
+		core::int32 value; if ( !stream.ReadInt32( value ) ) return false;
+<#+
+					}
+					else if ( value.Type is FundamentalFloat )
+					{
+#>
+		core::float32 value; if ( !stream.ReadFloat32( value ) ) return false;
+<#+
+					}
+					else if ( value.Type is FundamentalByte )
+					{
+#>
+		core::uint8 value; if ( !stream.ReadUint8( value ) ) return false;
+<#+
+					}
+					else if ( value.Type is FundamentalString )
+					{
+#>
+		core::uint32 size; if ( !stream.ReadSize( size ) ) return false;
+		void const * bytes; if ( !stream.ReadBytes( size, bytes ) ) return false;
+		<#=value.Type.QualifiedTypeNameCpp#> value( (char*)bytes, size );
+<#+
+					}
+					else if ( value.Type is FundamentalBool )
+					{
+#>
+		core::uint8 value_Byte; if ( !stream.ReadUint8( value_Byte ) ) return false;
+		<#=value.Type.QualifiedTypeNameCpp#> value = !!value_Byte;
+<#+
+					}
+
+					if ( metadataClass.UserDefined )
+					{
+#>
+		pThis-><#=member.Name#> = value;
+<#+
+					}
+					else
+					{
+#>
+		pThis-><#=member.Name#> = value;
+<#+
+					}
+#>
+		return true;
+	}	
+<#+
+				}
+				else if ( member is Function )
+				{
+					Function function = member as Function;
+#>
+	virtual bool FunctionCall_FromByteStream( core::ByteStreamReader & stream, <#=CppReflectionNamespace#>::MetadataClass const & type, core::ReferenceObject * pObjectUnityped )
+	{
+<#+
+					PushIndent("\t\t");
+					if ( !function.IsStatic )
+					{
+#>
+<#=metadataClass.QualifiedTypeNameCpp#> * pObject = core::polymorphic_downcast < <#=metadataClass.QualifiedTypeNameCpp#> * >( pObjectUnityped );	
+if ( pObject == NULL )
+	return false;
+	
+<#+
+					}
+					foreach( Argument arg in function.Arguments ) 
+					{
+						if ( arg is ArgumentReference )
+						{
+							ArgumentReference argReference = arg as ArgumentReference;
+							if ( argReference.Type == null )
+							{
+#>
+core::Guid Arg_<#=arg.Name#>; if ( !stream.ReadGuid( Arg_<#=arg.Name#> ) ) return false;
+<#+
+							}
+							else
+							{
+#>
+core::Guid Arg_<#=arg.Name#>_Guid; if ( !stream.ReadGuid( Arg_<#=arg.Name#>_Guid ) ) return false;
+core::ReferenceObject * Arg_<#=arg.Name#>_Unityped = NULL;
+if ( !Arg_<#=arg.Name#>_Guid.IsEmpty() && !core::Objects::FindObject( Arg_<#=arg.Name#>_Guid, Arg_<#=arg.Name#>_Unityped ) )
+	return false;
+<#=argReference.Type.QualifiedTypeNameCpp#> * Arg_<#=arg.Name#> = core::polymorphic_downcast < <#=argReference.Type.QualifiedTypeNameCpp#> * > ( Arg_<#=arg.Name#>_Unityped );
+<#+
+							}
+						}
+						else if ( arg is ArgumentValue )
+						{
+							ArgumentValue argValue = arg as ArgumentValue;
+							if ( argValue.Type == null )
+							{
+#>
+core::uint32 Arg_<#=arg.Name#>_Size; if ( !stream.ReadSize( Arg_<#=arg.Name#>_Size ) ) return false;
+void const * Arg_<#=arg.Name#>; if ( !stream.ReadBytes( Arg_<#=arg.Name#>_Size, Arg_<#=arg.Name#> ) ) return false;
+<#+
+							}
+							else if ( argValue.Type is MetadataClass )
+							{
+#>
+<#=argValue.Type.QualifiedTypeNameCpp#> Arg_<#=arg.Name#>; if ( !<#=argValue.Type.QualifiedTypeNameCpp#>_ByteStream::ObjectFromByteStream( stream, Arg_<#=arg.Name#> ) ) return false;
+<#+
+							}	
+							else if ( argValue.Type is Enumeration )
+							{
+#>
+<#=argValue.Type.QualifiedTypeNameCpp#>::Enum Arg_<#=arg.Name#>; if ( !stream.ReadEnum( Arg_<#=arg.Name#> ) ) return false;
+<#+
+							}
+							else if ( argValue.Type is FundamentalByte )
+							{
+#>
+<#=argValue.Type.QualifiedTypeNameCpp#> Arg_<#=arg.Name#>; if ( !stream.ReadUint8( Arg_<#=arg.Name#> ) ) return false;
+<#+
+							}
+							else if ( argValue.Type is FundamentalBool )
+							{
+#>
+core::uint8 Arg_<#=arg.Name#>_Byte; if ( !stream.ReadUint8( Arg_<#=arg.Name#>_Byte ) ) return false;
+<#=argValue.Type.QualifiedTypeNameCpp#> Arg_<#=arg.Name#> = !!Arg_<#=arg.Name#>_Byte;
+<#+
+							}							
+							else if ( argValue.Type is FundamentalInt )
+							{
+#>
+<#=argValue.Type.QualifiedTypeNameCpp#> Arg_<#=arg.Name#>; if ( !stream.ReadInt32( Arg_<#=arg.Name#> ) ) return false;
+<#+
+							}
+							else if ( argValue.Type is FundamentalString )
+							{
+#>
+core::uint32 Arg_<#=arg.Name#>_Size; if ( !stream.ReadSize( Arg_<#=arg.Name#>_Size ) ) return false;
+void const * Arg_<#=arg.Name#>_Bytes; if ( !stream.ReadBytes( Arg_<#=arg.Name#>_Size, Arg_<#=arg.Name#>_Bytes ) ) return false;
+<#=argValue.Type.QualifiedTypeNameCpp#> Arg_<#=arg.Name#> ( (char*)Arg_<#=arg.Name#>_Bytes, Arg_<#=arg.Name#>_Size );
+<#+
+							}
+							else if ( argValue.Type is FundamentalFloat )
+							{
+#>
+<#=argValue.Type.QualifiedTypeNameCpp#> Arg_<#=arg.Name#>; if ( !stream.ReadFloat32( Arg_<#=arg.Name#> ) ) return false;
+<#+
+							}
+							else
+								TextTransformation.Error("Unknown argument type for " + argValue.Name );
+						}
+						WriteLine("");
+					}
+					PopIndent();
+#>
+		<#=( function.IsStatic ? metadataClass.QualifiedTypeNameCpp+"::" : "pObject->" )+ function.Name#> (<#+
+					string separator = "";
+					foreach( Argument arg in function.Arguments ) 
+					{
+						if ( arg is ArgumentValue && (arg as ArgumentValue).Type == null )
+						{
+							#><#=separator#> Arg_<#=arg.Name#>, Arg_<#=arg.Name#>_Size<#+
+						}
+						else
+						{
+							#><#=separator#> Arg_<#=arg.Name#><#+
+						}
+						separator=",";
+					}
+		#> );
+		return true; 
+	}
+<#+
+				}
+#>
+};
+
+<#+
+			}
+#>
+
+<#=metadataClass.TypeName#>_Reflection::<#=metadataClass.TypeName#>_Reflection()
+{
+	Set_Guid("<#=metadataClass.Guid.ToString()#>");
+	Set_TypeName("<#=metadataClass.TypeName#>");	
+<#+
+			foreach( Member member in metadataClass.Members )
+			{
+#>
+	Get_Members().Add( CORE_NEW <#=metadataClass.TypeName#>_Member_<#=member.Name#>() );
+<#+
+			}
+#>
+}
+
+<#+
+			if ( metadataClass.IsReferenced )
+			{
+				if ( metadataClass is AbstractClass || metadataClass.UserDefined )
+				{
+#>
+core::ReferenceObject * <#=metadataClass.TypeName#>_Reflection::New() const
+{ 
+	CORE_ASSERT( 0 && "the New operation on abstract or user-defined class" );
+	return NULL; 
+}
+
+void <#=metadataClass.TypeName#>_Reflection::Delete( core::ReferenceObject * pDataObject ) const
+{ 
+	CORE_ASSERT( 0 && "the Delete operation on abstract or user-defined class" ); 
+}
+<#+
+				}
+				else
+				{
+					string metadataClassQualifiedTypeNameCpp = metadataClass.QualifiedTypeNameCpp;
+					if ( metadataClass is CollectionClass )
+						metadataClassQualifiedTypeNameCpp += "_Partial";
+#>
+core::ReferenceObject * <#=metadataClass.TypeName#>_Reflection::New() const
+{ 
+	return CORE_NEW <#=metadataClassQualifiedTypeNameCpp#>(); 
+}
+
+void <#=metadataClass.TypeName#>_Reflection::Delete( core::ReferenceObject * pDataObject ) const
+{ 
+	CORE_DELETE pDataObject; 
+}
+<#+
+				}
+			}
+
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "" );
+				WriteLine( "} // namespace " + metadataClass.Namespace );
+			}
+
+			WriteLine( "" );
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceEnd );
+		}
+	}
+}
+#>

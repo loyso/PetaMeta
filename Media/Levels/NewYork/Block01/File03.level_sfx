@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Scene_SpecialFX xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Guid="5a2415b4-310e-43ea-9e3e-69297d6fd96c">
+  <objects>
+    <SceneAnimMesh Guid="0fb5dfc9-d3dc-47eb-a685-e0ac8120895a">
+      <isSfxEnabled>false</isSfxEnabled>
+      <positionSfx x="1" y="1" z="1" />
+    </SceneAnimMesh>
+  </objects>
+</Scene_SpecialFX>

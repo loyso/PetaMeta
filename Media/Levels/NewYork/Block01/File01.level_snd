@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Scene_Sound xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Guid="9d0e7ca7-5be5-4abb-b1aa-6e527c9fa302">
+  <objects>
+    <SceneObject Guid="391eb883-c88f-4c66-b552-0d6e18cb72e3">
+      <isSoundEnabled>false</isSoundEnabled>
+    </SceneObject>
+    <SceneZoneTrigger Guid="c8997c24-461f-4d0a-b044-c25a51daaeee">
+      <isSoundEnabled>false</isSoundEnabled>
+    </SceneZoneTrigger>
+  </objects>
+</Scene_Sound>

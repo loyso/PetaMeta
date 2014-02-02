@@ -1,0 +1,26 @@
+﻿<#@ template hostspecific="True"#>
+<#@ assembly name="$(SolutionDir)Bin\Debug\Metadata.dll" #>
+<#@ import namespace="metadata" #>
+<#@ include file="T4Toolbox.tt" #>
+<#@ output extension=".log" #>
+<#
+	metadata.MetadataProject project = null;
+	try
+	{
+		project = project.ProjectLoad( Host.ResolvePath(@"..\Media\MetaMetadata" + project.ProjectExtension() ) );
+		project.Load();
+	}
+	catch( core.ReferencesFixupException e )
+	{
+		Error( "ReferencesFixupException, Guid=" + e.Guid.ToString() );
+	}
+	catch ( core.TreePathException e )
+	{
+		Error( "TreePathException, Path=" + e.Path.ToString() );
+	}
+	const string csOutputProject = @"Metadata.csproj";
+#>
+<#@ include file="..\Transformations\Cs\GenerateCsPartial.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsSerialization.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsOperations.tt" #>
+

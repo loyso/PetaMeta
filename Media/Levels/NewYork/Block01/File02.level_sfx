@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Scene_SpecialFX xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Guid="08372568-8d2e-4bf3-8bb2-b626dc2af16c">
+  <objects>
+    <SceneMesh Guid="d91c2d3d-8cdc-4761-bbbb-8dd037b35040">
+      <isSfxEnabled>false</isSfxEnabled>
+    </SceneMesh>
+  </objects>
+</Scene_SpecialFX>

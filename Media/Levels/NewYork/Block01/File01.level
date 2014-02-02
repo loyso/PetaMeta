@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Scene xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Guid="9d0e7ca7-5be5-4abb-b1aa-6e527c9fa302">
+  <objects>
+    <SceneObject Guid="391eb883-c88f-4c66-b552-0d6e18cb72e3">
+      <position x="1" y="1" z="1" />
+      <scale>0.1</scale>
+      <color r="255" g="255" b="255" a="0" />
+      <lod>1</lod>
+      <visible>false</visible>
+      <next>d91c2d3d-8cdc-4761-bbbb-8dd037b35040</next>
+    </SceneObject>
+    <SceneZoneTrigger Guid="c8997c24-461f-4d0a-b044-c25a51daaeee">
+      <position x="1" y="1" z="1" />
+      <scale>0.1</scale>
+      <color r="255" g="255" b="255" a="0" />
+      <lod>1</lod>
+      <visible>false</visible>
+      <next>391eb883-c88f-4c66-b552-0d6e18cb72e3</next>
+      <ctrl xsi:type="ControllerBox" Guid="0c148ee8-a54b-4554-ac4a-4aafea083f66">
+        <priority>7</priority>
+        <size x="0.9357798" y="5.68204451" z="9.010981" />
+      </ctrl>
+    </SceneZoneTrigger>
+  </objects>
+</Scene>

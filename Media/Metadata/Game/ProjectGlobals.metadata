@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <FolderClass Guid="b5866822-9df5-4c77-abbc-ea49875fbedf" TypeName="Globals">
+      <Members>
+        <ValueName Guid="f4aa4014-1f8d-437a-abff-6bc886e68882" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;Globals&quot;" DefaultValueXml="&quot;Globals&quot;" />
+        <ParentReference Guid="6253d28a-6b1f-4af5-9919-3129616938fb" Name="parent" Type="56e8a41d-bf20-475f-aa07-0a512975f527" />
+      </Members>
+    </FolderClass>
+  </Types>
+</MetadataFileContent>

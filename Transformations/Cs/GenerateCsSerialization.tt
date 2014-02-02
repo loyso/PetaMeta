@@ -1,0 +1,1623 @@
+﻿<#
+	{
+		CsSerialiationCommon core = new CsSerialiationCommon( this, project );
+		core.Output.File = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile ) + ".Serialization.cs";
+		core.Output.Project = csOutputProject;
+		core.Render();
+	}
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		if ( metadataFile.GenerateSerialization && metadataFile.Content.Classes.GetEnumerator().MoveNext() )
+		{
+			CsSerialiation csSerialization = new CsSerialiation( this, project, metadataFile );
+			csSerialization.Output.File = metadataFile.RelativeName + ".Serialization.cs";
+			csSerialization.Output.Project = csOutputProject;
+			csSerialization.Render();
+		}
+	}
+#>
+<#+
+public class CsSerialiationCommon : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	
+	public CsSerialiationCommon( GeneratedTextTransformation textTransformation, metadata.MetadataProject project )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+using System.Xml.Serialization;
+using System.ComponentModel;
+
+namespace <#= Project.CoreNamespace #>
+{
+	public static class Serialization
+	{
+		delegate core.SerializationObject	DataObjectToSerialization();
+		delegate core.DataObject			DataObjectFromSerialization();
+
+		delegate core.PartialObject			DataObjectToPartial();
+		
+<#+
+	foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+	{
+#>
+		static public readonly System.Type[] Types<#= group == null ? "" : "_" + group.Name #> = 
+		{ 
+<#+
+	PushIndent("\t\t\t");
+	bool isFirstClass = true;
+	foreach ( MetadataClass metadataClass in Project.Metadata.Classes )
+	{
+		if ( metadataClass.Parent.Parent.GenerateSerialization )
+		{
+			if ( !isFirstClass )
+				Write( ", ");
+			isFirstClass = false;
+			WriteLine("typeof(" + metadataClass.QualifiedSerializationTypeName(group) + ")");
+		}
+	}
+	PopIndent();
+#>	
+		};		
+<#+
+		if ( group == null )
+		{
+#>	
+		static Dictionary<System.Type,DataObjectToSerialization> ToSerialization = new Dictionary<System.Type,DataObjectToSerialization>();	
+		static Dictionary<System.Type,DataObjectFromSerialization> FromSerialization = new Dictionary<System.Type,DataObjectFromSerialization>();	
+
+		static void InitSerialization()
+		{
+<#+
+			PushIndent("\t\t\t");
+			foreach( MetadataClass c in Project.Metadata.Classes )
+				if ( c.Parent.Parent.GenerateSerialization && !(c is AbstractClass ) )
+				{
+					WriteLine( "ToSerialization.Add( typeof(" + c.QualifiedTypeName + "), () => { return new " + c.QualifiedSerializationTypeName(group) + "(); } );" );
+					WriteLine( "FromSerialization.Add( typeof(" + c.QualifiedSerializationTypeName(group) + "), () => { return new " + c.QualifiedTypeName + "(); } );" );
+				}
+			PopIndent();
+#>
+		}
+		
+		static public T ConstructSerialization < T >( System.Type dataObjectType ) where T : core.SerializationObject
+		{
+			if ( ToSerialization.Count == 0 )
+				InitSerialization();
+		
+			DataObjectToSerialization delegateObjectToSerialization;
+			if ( ToSerialization.TryGetValue( dataObjectType, out delegateObjectToSerialization ) )
+			{
+				core.SerializationObject serializationObject = delegateObjectToSerialization();				
+				T typedObject = serializationObject as T;
+				if ( typedObject == null )
+					throw new core.TypeMappingException( dataObjectType );				
+				return typedObject;
+			}
+			return null;	
+		}	
+
+		static public T ConstructData < T >( System.Type serializationObjectType ) where T : core.DataObject
+		{
+			if ( FromSerialization.Count == 0 )
+				InitSerialization();
+				
+			DataObjectFromSerialization delegateObjectFromSerialization;
+			if ( FromSerialization.TryGetValue( serializationObjectType, out delegateObjectFromSerialization ) )
+			{
+				core.DataObject dataObject = delegateObjectFromSerialization();
+				T typedObject = dataObject as T;
+				if ( typedObject == null )
+					throw new core.TypeMappingException( serializationObjectType );				
+				return typedObject;
+			}
+			return null;	
+		}	
+<#+
+		}
+		else // PARTIAL
+		{
+#>	
+		static Dictionary<System.Type,DataObjectToPartial> ToPartial<#= group.Name #> = new Dictionary<System.Type,DataObjectToPartial>();	
+
+		static void InitPartial_<#= group.Name #>()
+		{
+<#+
+			PushIndent("\t\t\t");
+			foreach( MetadataClass c in Project.Metadata.Classes )
+				if ( c.HasMembersOfGroup(group) )
+					WriteLine( "ToPartial" + group.Name + ".Add( typeof(" + c.QualifiedTypeName + "), () => { return new " + c.QualifiedSerializationTypeName(group) + "(); } );" );
+			PopIndent();
+#>
+		}
+		
+		static public T ConstructPartial_<#= group.Name #> < T >( System.Type dataObjectType ) where T : core.PartialObject, new()
+		{
+			if ( ToPartial<#= group.Name #>.Count == 0 )
+				InitPartial_<#= group.Name #>();
+		
+			DataObjectToPartial delegateObjectToPartial;
+			if ( ToPartial<#= group.Name #>.TryGetValue( dataObjectType, out delegateObjectToPartial ) )
+			{
+				core.PartialObject partialObject = delegateObjectToPartial();
+				T typedObject = partialObject as T;
+				if ( typedObject == null )
+					throw new core.TypeMappingException( dataObjectType );				
+				return typedObject;
+			}
+			return null;	
+		}			
+<#+
+		}
+	} // foreach group
+#>
+	} // Serialization
+} // namespace <#= Project.CoreNamespace #>
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+} // CsSerialiationCommon
+#>
+<#+
+public class CsSerialiation : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected metadata.MetadataFile				File;
+	
+	public CsSerialiation( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, metadata.MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+
+// AUTOGENERATED FILE. MODIFY IT AT YOUR OWN RISK.
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
+using System.ComponentModel;
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			PushIndent("\t");
+			WriteLine( "" );
+		}
+		
+		foreach( MetadataClass c in File.Content.Classes )
+		{
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + c.Namespace );
+				WriteLine( "{" );
+				PushIndent("\t");
+			}
+			
+			foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+			{						
+				string baseDeclaration;
+				
+				if ( group == null )
+				{
+					baseDeclaration = "core.SerializationObject";
+					if ( c.IsReferenced || c is FolderClass || c is FileClass )
+						baseDeclaration = "core.ReferenceSerializationObject";
+					WriteLine( "[XmlType(\"" + c.TypeName + "\")]" );
+					if ( c is CollectionClass )
+						baseDeclaration = "core.SerializationCollectionOf <" + ( c as CollectionClass ).ItemsClass.QualifiedSerializationTypeName(group) + ">";
+				}
+				else // partial
+				{
+					if ( !c.HasMembersOfGroup(group) )
+						continue;
+						
+					baseDeclaration = "core.PartialObject";
+					if ( c.IsReferenced || c is FolderClass || c is FileClass )
+						baseDeclaration = "core.ReferencePartialObject";
+					WriteLine( "[XmlType(\"" + c.TypeName + "_" + group.Name + "\")]" );
+					if ( c is CollectionClass )
+						baseDeclaration = "core.PartialCollectionOf <" + ( c as CollectionClass ).ItemsClass.QualifiedSerializationTypeName(group) + ">";
+				}
+				
+				if ( c.BaseClass != null )
+				{
+					if ( !c.BaseClass.HasMembersOfGroup(group) )
+						TextTransformation.Error( "class " + c.TypeName + " contains members of group " + group.Name + " but base class " + c.BaseClass.TypeName + " doesn't" );
+					baseDeclaration = c.BaseClass.QualifiedSerializationTypeName(group);
+				}
+				
+				string classModifiers = "public";
+				if ( c is AbstractClass )
+					classModifiers += " abstract";
+				
+				WriteLine( classModifiers + " class " + c.SerializationTypeName(group) + " : " + baseDeclaration );
+				WriteLine( "{" );
+				PushIndent("\t");
+
+				WriteLine( "[XmlIgnore]" );
+				WriteLine( c.QualifiedTypeName + " This;" );
+				WriteLine( "" );
+					
+				foreach( Member m in c.MembersByGroupAndName(group) )
+				{
+					if ( m is Collection )
+					{
+						Collection collection = (Collection)m;
+						WriteLine("[XmlArray]");
+						foreach( MetadataClass derivedClass in Project.Metadata.BaseAndDerivedClasses( collection.Type.ItemsClass ) )
+							if ( !( derivedClass is AbstractClass) && derivedClass.HasMembersOfGroup(group) )
+								WriteLine("[XmlArrayItem(typeof(" + derivedClass.QualifiedSerializationTypeName(group) + "),ElementName = \"" + derivedClass.TypeName + "\")]");
+#>
+public <#=collection.Type.QualifiedSerializationTypeName(group)#> <#=m.Name#> = new <#=collection.Type.QualifiedSerializationTypeName(group)#>();
+<#+
+					}
+					else if ( m is FileStorage )
+					{
+						FileStorage fileStorage = (FileStorage)m;
+						WriteLine( "[XmlIgnore]" );
+						WriteLine( "public " + fileStorage.Type.QualifiedSerializationTypeName(group) + " " + m.Name + ";" );
+					}
+					else if ( m is ParentReference )
+					{
+						ParentReference ParentReference = (ParentReference)m;
+						WriteLine( "[XmlIgnore]" );
+						WriteLine( "public " + ParentReference.Type.QualifiedSerializationTypeName(group) + " " + m.Name + ";" );
+					}
+					else if ( m is Reference )
+					{
+						Reference reference = (Reference)m;
+						if ( reference.IsXmlAttr )
+							WriteLine( "[XmlAttribute]" );
+						WriteLine( "[DefaultValue(\"\")]" );
+						WriteLine( "public string " + m.Name + ";" );
+					}
+					else if ( m is Value )
+					{
+						Value value = (Value)m;
+						string defaultValue = value.DefaultValueXml;
+						if ( defaultValue.Length == 0 )
+							defaultValue = value.DefaultValue;
+						
+						if ( value.Type is Fundamental )
+						{
+							if ( value.IsXmlAttr )
+								WriteLine( "[XmlAttribute]" );
+							if ( value.DefaultValueXml.Length > 0 )
+								WriteLine( "[DefaultValue(" + value.DefaultValueXml + ")]" );
+							Write( "public " + value.Type.QualifiedSerializationTypeName(group) + " " + m.Name );
+							if ( defaultValue.Length > 0 )
+								Write( " = " + defaultValue );
+							WriteLine(";");
+						}
+						else if ( value.Type is Enumeration )
+						{
+							Enumeration enumeration = (Enumeration)value.Type;
+							if ( value.IsXmlAttr )
+								WriteLine( "[XmlAttribute]" );
+							if ( value.DefaultValueXml.Length > 0 )
+								WriteLine( "[DefaultValue(" + enumeration.QualifiedTypeName + "." + value.DefaultValueXml + ")]" );
+							Write( "public " + value.Type.QualifiedSerializationTypeName(group) + " " + m.Name );
+							if ( defaultValue.Length > 0 )
+								Write( " = " + enumeration.QualifiedTypeName + "." + defaultValue );
+							WriteLine(";");
+						}
+						else if ( value.Type is MetadataClass )
+						{
+							MetadataClass metadataClass = (MetadataClass)value.Type;
+							if ( value.IsPolymorphic )
+							{
+								WriteLine( "public " + value.Type.QualifiedSerializationTypeName(group) + " " + m.Name + ";" );							
+							}
+							else
+							{
+								Write( "public " + value.Type.QualifiedSerializationTypeName(group) + " " + m.Name + " = new " + value.Type.QualifiedSerializationTypeName(group) );
+								if ( defaultValue.Length > 0 )
+									WriteLine ( " {" + defaultValue + "};" );
+								else
+									WriteLine ( " ();" );
+							}
+						}
+					}
+					WriteLine("");
+				}
+				
+				// CONSTRUCT
+				
+				if ( group == null )
+				{
+					if ( c.HasReferences )
+					{
+#>
+public override void CreateGuidToObjectMapping ( core.StringToObject stringToObject ) 
+{
+<#+
+						if ( c.IsReferenced || c is FolderClass || c is FileClass )
+						{
+#>
+	stringToObject.Add( GuidStr.ToOptGuid(), This );	
+<#+
+						}
+#>	CreateGuidToObjectMapping_Base( stringToObject );
+}
+protected override void CreateGuidToObjectMapping_Base ( core.StringToObject stringToObject )
+{
+	base.CreateGuidToObjectMapping_Base( stringToObject );
+<#+
+						PushIndent("\t");
+						if ( c is CollectionClass )
+						{
+							CollectionClass collectionClass = c as CollectionClass;
+#>
+foreach( <#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in Values )
+	collectionElement.CreateGuidToObjectMapping( stringToObject );
+<#+
+						}
+						
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							MetadataClass metadataClass = null;
+							if ( m is Collection )
+								metadataClass = (m as Collection).Type;
+							if ( m is FileStorage )
+								metadataClass = (m as FileStorage).Type;
+							if ( m is Value )
+								metadataClass = (m as Value).Type as MetadataClass;
+
+							if ( metadataClass != null && metadataClass.HasReferences )
+							{
+#>
+if ( <#=m.Name#> != null )
+	<#=m.Name#>.CreateGuidToObjectMapping( stringToObject );
+<#+
+							}
+						}
+						PopIndent();					
+#>
+}
+<#+
+					} // c.HasReferences
+#>
+
+public override void FromSerializationConstruct( core.DataObject dataObject )
+{
+	FromSerializationConstruct_Base( (<#= c.QualifiedTypeName #>)dataObject );
+}
+protected void FromSerializationConstruct_Base( <#= c.QualifiedTypeName #> dataObject )
+{
+	This = dataObject;
+	base.FromSerializationConstruct_Base( This );
+<#+
+					PushIndent("\t");
+					if ( c is ProjectClass )
+					{
+						WriteLine( "This.ProjectName = ProjectName;" );
+						WriteLine( "This.ProjectPath = ProjectPath;" );
+					}
+					if ( c is CollectionClass )
+					{
+						CollectionClass collectionClass = c as CollectionClass;
+#>
+This.Clear();
+foreach( <#= collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in Values )
+{
+	<#=collectionClass.ItemsClass.QualifiedTypeName#> dataCollectionElement = <#= Project.CoreNamespace #>.Serialization.ConstructData<<#=collectionClass.ItemsClass.QualifiedTypeName#>>( collectionElement.GetType() );
+	collectionElement.FromSerializationConstruct( dataCollectionElement );
+	This.Add( dataCollectionElement );
+}
+<#+
+					}
+					
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Collection )
+						{
+							Collection collection = (Collection)m;
+#>
+<#=m.Name#>.FromSerializationConstruct( This.<#=m.Name#> );
+foreach( <#=collection.Type.ItemsClass.QualifiedTypeName#> collectionElement in This.<#=m.Name#> )
+{
+<#+
+							foreach( Member childMember in collection.Type.ItemsClass.MembersByGroupDeep(group) )
+								if ( childMember is ParentReference && (childMember as ParentReference).Type == c )
+									WriteLine("\tcollectionElement." + childMember.Name + " = This;" );
+#>
+}
+<#+
+						}
+						else if ( m is FileStorage )
+						{
+						}									
+						else if ( m is ParentReference )
+						{
+						}
+						else if ( m is Reference )
+						{
+						}
+						else if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is MetadataClass )
+							{
+								MetadataClass metadataClass = (MetadataClass)value.Type;
+#>
+if ( <#=m.Name#> != null )
+{
+<#+
+								if ( value.IsPolymorphic )
+								{
+#>
+	This.<#=m.Name#> = <#= Project.CoreNamespace #>.Serialization.ConstructData<<#=value.Type.QualifiedTypeName#>>( <#=m.Name#>.GetType() );
+<#+
+								}
+								foreach( Member childMember in metadataClass.MembersByGroupDeep(group) )
+									if ( childMember is ParentReference && (childMember as ParentReference).Type == c )
+										WriteLine("\tThis." + m.Name + "." + childMember.Name + " = This;" );
+#>
+	<#=m.Name#>.FromSerializationConstruct( This.<#=m.Name#> );
+}
+<#+
+							}
+						}					
+					}
+					PopIndent();
+#>
+}
+<#+
+				}
+
+				// PARTIAL
+				
+				if ( group != null )
+				{
+#>
+
+public override void FromSerializationBind( core.DataObject dataObject, core.StringToObject stringToObject )
+{
+	FromSerializationBind_Base( (<#= c.QualifiedTypeName #>)dataObject, stringToObject );
+}
+protected void FromSerializationBind_Base( <#= c.QualifiedTypeName #> dataObject, core.StringToObject stringToObject )
+{
+	This = dataObject;
+	base.FromSerializationBind_Base( This, stringToObject );
+<#+
+					PushIndent("\t");
+					if ( c is CollectionClass )
+					{
+						CollectionClass collectionClass = c as CollectionClass;
+						if ( collectionClass.ItemsClass.IsReferenced || collectionClass.ItemsClass is FolderClass || collectionClass.ItemsClass is FileClass )
+						{
+#>
+foreach( <#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in Values )
+{
+	<#=collectionClass.ItemsClass.QualifiedTypeName#> dataCollectionElement = stringToObject.Fixup < <#=collectionClass.ItemsClass.QualifiedTypeName#> >( collectionElement.GuidStr.ToOptGuid() );
+	collectionElement.FromSerializationBind( dataCollectionElement, stringToObject );
+}
+<#+
+						}
+						else
+						{
+#>
+IEnumerator<<#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#>> EnumeratorSerialization = Values.GetEnumerator();
+IEnumerator<<#=collectionClass.ItemsClass.QualifiedTypeName#>> EnumeratorData = This.GetEnumerator();
+while( EnumeratorSerialization.MoveNext() && EnumeratorData.MoveNext() )
+{
+	EnumeratorSerialization.Current.FromSerializationBind( EnumeratorData.Current, stringToObject );
+}
+<#+
+						}
+					}
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Collection )
+						{
+							Collection collection = m as Collection;
+#>
+<#=m.Name#>.FromSerializationBind( This.<#=m.Name#>, stringToObject );
+<#+
+						}
+						else if ( m is FileStorage )
+						{
+						}									
+						else if ( m is ParentReference )
+						{
+						}
+						else if ( m is Reference )
+						{
+						}
+						else if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is MetadataClass )
+							{
+#>
+if ( <#=m.Name#> != null )
+{
+<#+							
+								MetadataClass metadataClass = (MetadataClass)value.Type;
+								if ( metadataClass.HasReferences && ( metadataClass.IsReferenced || metadataClass is FolderClass || metadataClass is FileClass ) )
+								{
+#>
+	<#=value.Type.QualifiedTypeName#> data<#=m.Name#> = This.<#=m.Name#>;
+	if ( <#=m.Name#>.GuidStr.Length > 0 )
+		data<#=m.Name#> = stringToObject.Fixup < <#=value.Type.QualifiedTypeName#> >( <#=m.Name#>.GuidStr.ToOptGuid() );
+	<#=m.Name#>.FromSerializationBind( data<#=m.Name#>, stringToObject );
+<#+
+								}
+								else
+								{
+									if ( metadataClass.HasAllMembersDefaultGroup )
+									{
+#>
+	<#=m.Name#>.FromSerializationConstruct( This.<#=m.Name#> );
+<#+
+									}
+									else
+									{
+#>
+	<#=m.Name#>.FromSerializationBind( This.<#=m.Name#>, stringToObject );
+<#+
+									}
+								}
+#>
+}
+<#+
+							}
+						}
+					}
+					PopIndent();
+#>
+}
+<#+
+				} // end of PARTIAL
+				
+				// COMMON
+#>
+
+public override void FromSerialization( core.StringToObject stringToObject )
+{
+	FromSerialization_Base( This, stringToObject );
+}
+protected void FromSerialization_Base( <#= c.QualifiedTypeName #> dataObject, core.StringToObject stringToObject )
+{
+	base.FromSerialization_Base( This, stringToObject );	
+<#+
+				PushIndent("\t");
+				if ( c is CollectionClass )
+				{
+					CollectionClass collectionClass = c as CollectionClass;
+#>
+foreach( <#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in Values )
+	collectionElement.FromSerialization( stringToObject );
+<#+
+				}
+
+				foreach( Member m in c.MembersByGroup(group) )
+				{
+					if ( m is Collection )
+					{
+#>
+<#=m.Name#>.FromSerialization( stringToObject );
+<#+
+					}
+					else if ( m is FileStorage )
+					{
+					}									
+					else if ( m is ParentReference )
+					{
+					}
+					else if ( m is Reference )
+					{
+						Reference reference = (Reference)m;
+#>
+This.<#=m.Name#> = stringToObject.Fixup < <#=reference.Type.QualifiedTypeName#> >( <#=m.Name#>.ToOptGuid() );
+<#+
+					}
+					else if ( m is Value )
+					{
+						Value value = (Value)m;
+						if ( value.Type is Fundamental )
+						{
+#>
+This.<#=m.Name#> = <#=m.Name#>;
+<#+
+						}
+						else if ( value.Type is Enumeration )
+						{
+#>
+This.<#=m.Name#> = <#=m.Name#>;
+<#+
+						}
+						else if ( value.Type is MetadataClass )
+						{
+							WriteLine( "if ( " + m.Name + " != null )" );				
+							WriteLine( "\t" + m.Name + ".FromSerialization( stringToObject );" );
+						}
+					}
+				}
+				PopIndent();
+#>
+}
+
+public override void ToSerialization( core.DataObject dataObject )
+{
+	ToSerialization_Base( (<#= c.QualifiedTypeName #>)dataObject );
+}
+protected void ToSerialization_Base( <#= c.QualifiedTypeName #> dataObject )
+{
+	This = dataObject;	
+	base.ToSerialization_Base( This );
+<#+
+				PushIndent("\t");
+				if ( c is ProjectClass )
+				{
+					WriteLine( "ProjectName = This.ProjectName;" );
+					WriteLine( "ProjectPath = This.ProjectPath;" );
+				}
+				if ( c is CollectionClass )
+				{
+					CollectionClass collectionClass = c as CollectionClass;
+#>
+Clear();
+foreach( <#=collectionClass.ItemsClass.QualifiedTypeName#> dataCollectionElement in This )
+{
+<#+
+						if ( group == null )
+						{
+#>
+	<#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement = <#= Project.CoreNamespace #>.Serialization.ConstructSerialization<<#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#>>( dataCollectionElement.GetType() );
+<#+
+						}
+						else
+						{
+#>
+	<#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement = <#= Project.CoreNamespace #>.Serialization.ConstructPartial_<#= group.Name #> < <#=collectionClass.ItemsClass.QualifiedSerializationTypeName(group)#> > ( dataCollectionElement.GetType() );
+<#+
+						}
+#>
+	collectionElement.ToSerialization( dataCollectionElement );	
+	Add( collectionElement );
+}
+<#+
+				}
+
+				foreach( Member m in c.MembersByGroupAndName(group) )
+				{
+					if ( m is Collection )
+					{
+						Collection collection = (Collection)m;				
+#>
+<#=m.Name#>.ToSerialization( This.<#=m.Name#> );
+foreach ( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+{
+<#+
+						foreach( Member childMember in collection.Type.ItemsClass.MembersByGroupDeep(group) )
+							if ( childMember is ParentReference && (childMember as ParentReference).Type == c )
+								WriteLine("\tcollectionElement." + childMember.Name + " = this;" );
+#>
+}
+<#+
+					}
+					else if ( m is FileStorage )
+					{
+					}				
+					else if ( m is ParentReference )
+					{
+					}
+					else if ( m is Reference )
+					{
+#>
+<#=m.Name#> = ( This.<#=m.Name#> == null ? "" : This.<#=m.Name#>.Guid.ToOptString() );
+<#+
+					}
+					else if ( m is Value )
+					{
+						Value value = (Value)m;
+						if ( value.Type is Fundamental )
+						{
+#>
+<#=m.Name#> = This.<#=m.Name#>;
+<#+
+						}
+						else if ( value.Type is Enumeration )
+						{
+#>
+<#=m.Name#> = This.<#=m.Name#>;
+<#+
+						}
+						else if ( value.Type is MetadataClass )
+						{
+							MetadataClass metadataClass = (MetadataClass)value.Type;
+#>
+if ( This.<#=m.Name#> != null )
+{
+<#+
+							if ( group == null || metadataClass.HasAllMembersDefaultGroup )
+							{					
+#>
+	<#=m.Name#> = <#= Project.CoreNamespace #>.Serialization.ConstructSerialization<<#=value.Type.QualifiedSerializationTypeName(group)#>>( This.<#=m.Name#>.GetType() );
+<#+
+							}
+							else
+							{
+#>
+	<#=m.Name#> = <#= Project.CoreNamespace #>.Serialization.ConstructPartial_<#= group.Name #> < <#=value.Type.QualifiedSerializationTypeName(group)#> > ( This.<#=m.Name#>.GetType() );
+<#+
+							}
+							
+							foreach( Member childMember in metadataClass.MembersByGroupDeep(group) )
+								if ( childMember is ParentReference && ( childMember as ParentReference).Type == c )
+									WriteLine( "\t" + m.Name + "." + childMember.Name + " = this;" );
+#>
+	<#=m.Name#>.ToSerialization( This.<#=m.Name#> );
+}
+<#+
+						}
+					}
+				}
+				PopIndent();
+#>
+}
+
+<#+
+				if ( c is FolderClass || c is FileClass || c is ProjectClass )
+				{
+					if ( group == null )
+					{
+#>
+public override void FileStorage_FromSerializationConstruct()
+{
+	base.FileStorage_FromSerializationConstruct();
+<#+
+						PushIndent("\t");
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							if ( m is Collection )
+							{
+								Collection collection = (Collection)m;				
+								if ( collection.Type.ItemsClass is FolderClass || collection.Type.ItemsClass is FileClass || collection.Type.ItemsClass is ProjectClass )
+								{
+#>
+foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+	collectionElement.FileStorage_FromSerializationConstruct();
+<#+						
+								}
+							}
+							if ( m is FileStorage )
+							{
+								FileStorage fileStorage = (FileStorage)m;
+#>
+if ( <#=m.Name#> != null )
+{
+	This.<#=m.Name#> = <#= Project.CoreNamespace #>.Serialization.ConstructData<<#=fileStorage.Type.QualifiedTypeName#>>( <#=m.Name#>.GetType() );
+<#+
+								foreach( Member childMember in fileStorage.Type.MembersByGroupDeep(group) )
+									if ( childMember is ParentReference && (childMember as ParentReference).Type == c )
+										WriteLine( "\tThis." + m.Name + "." + childMember.Name + " = This;" );
+#>
+	<#=m.Name#>.FromSerializationConstruct( This.<#=m.Name#> );
+}
+<#+
+							}
+							if ( m is Value )
+							{
+								Value value = (Value)m;
+								if ( value.Type is MetadataClass && ( value.Type is FolderClass || value.Type is FileClass || value.Type is ProjectClass ) )
+								{
+#>
+<#=m.Name#>.FileStorage_FromSerializationConstruct();
+<#+
+								}
+							}
+						}
+						PopIndent();
+#>}
+<#+
+					}
+					else // group != null
+					{
+#>
+public override void FileStorage_FromSerializationBind( core.StringToObject stringToObject )
+{
+	base.FileStorage_FromSerializationBind( stringToObject );
+<#+
+						PushIndent("\t");
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							if ( m is Collection )
+							{
+								Collection collection = (Collection)m;				
+								if ( collection.Type.ItemsClass is FolderClass || collection.Type.ItemsClass is FileClass || collection.Type.ItemsClass is ProjectClass )
+								{
+#>
+foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+	collectionElement.FileStorage_FromSerializationBind( stringToObject );
+<#+
+								}
+							}
+							if ( m is FileStorage )
+							{
+								FileStorage fileStorage = (FileStorage)m;
+#>
+if ( <#=m.Name#> != null )
+{
+<#+
+								if ( fileStorage.Type.IsReferenced )
+								{
+#>
+	<#=fileStorage.Type.QualifiedTypeName#> data<#=m.Name#> = This.<#=m.Name#>;
+	if ( <#=m.Name#>.GuidStr.Length > 0 )
+		data<#=m.Name#> = stringToObject.Fixup <<#=fileStorage.Type.QualifiedTypeName#>>( <#=m.Name#>.GuidStr.ToOptGuid() );
+	<#=m.Name#>.FromSerializationBind( data<#=m.Name#>, stringToObject );
+<#+
+								}
+								else
+								{
+#>
+	<#=m.Name#>.FromSerializationBind( This.<#=m.Name#>, stringToObject );
+<#+
+								}
+#>
+}
+<#+
+							}
+							if ( m is Value )
+							{
+								Value value = (Value)m;
+								if ( value.Type is FolderClass || value.Type is FileClass || value.Type is ProjectClass )
+								{
+#>
+<#=m.Name#>.FileStorage_FromSerializationBind( stringToObject );
+<#+
+								}
+							}
+						}
+						PopIndent();
+#>}
+<#+
+					} // group
+#>
+public override void FileStorage_FromSerialization( core.StringToObject stringToObject )
+{
+	base.FileStorage_FromSerialization( stringToObject );
+<#+
+						PushIndent("\t");
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							if ( m is Collection )
+							{
+								Collection collection = (Collection)m;				
+								if ( collection.Type.ItemsClass is FolderClass || collection.Type.ItemsClass is FileClass || collection.Type.ItemsClass is ProjectClass )
+								{
+#>
+foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+	collectionElement.FileStorage_FromSerialization( stringToObject );
+<#+
+								}
+							}
+							if ( m is FileStorage )
+							{
+#>
+if ( <#=m.Name#> != null )
+	<#=m.Name#>.FromSerialization( stringToObject );
+<#+
+							}
+							if ( m is Value )
+							{
+								Value value = (Value)m;
+								if ( value.Type is FolderClass || value.Type is FileClass || value.Type is ProjectClass )
+								{
+#>
+<#=m.Name#>.FileStorage_FromSerialization( stringToObject );
+<#+
+								}
+							}
+						}
+						PopIndent();
+#>}
+public override void FileStorage_ToSerialization()
+{
+	base.FileStorage_ToSerialization();
+<#+
+						PushIndent("\t");
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							if ( m is Collection )
+							{
+								Collection collection = (Collection)m;				
+								if ( collection.Type.ItemsClass is FolderClass || collection.Type.ItemsClass is FileClass || collection.Type.ItemsClass is ProjectClass )
+								{
+#>
+foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+	collectionElement.FileStorage_ToSerialization();
+<#+								}
+							}
+							if ( m is FileStorage )
+							{
+								FileStorage fileStorage = (FileStorage)m;
+#>
+if ( This.<#=m.Name#> != null )
+{
+	<#=m.Name#> = new <#=fileStorage.Type.QualifiedSerializationTypeName(group)#>();
+<#+
+								foreach( Member childMember in fileStorage.Type.MembersByGroupDeep(group) )
+									if ( childMember is ParentReference && (childMember as ParentReference).Type == c )
+										WriteLine( "\t" + m.Name + "." + childMember.Name + " = this;" );
+#>
+	<#=m.Name#>.ToSerialization( This.<#=m.Name#> );
+}
+<#+
+							}
+							if ( m is Value )
+							{
+								Value value = (Value)m;
+								if ( value.Type is FolderClass || value.Type is FileClass || value.Type is ProjectClass )
+								{
+#>
+<#=m.Name#>.FileStorage_ToSerialization();
+<#+
+								}
+							}
+						}
+						PopIndent();
+#>}
+<#+
+				} // c is FolderClass || c is FileClass || c is ProjectClass
+
+				// FILE
+
+				if ( c is FileClass )
+				{
+					Member parentFolder = c.FindMemberDeep( m => m is ParentReference && ( m as ParentReference ).Type is FolderClass );
+					Member valueName = c.FindMemberDeep( m => m is ValueName );
+					if ( parentFolder != null && valueName != null )
+					{
+						FileClass fileClass = c as FileClass;
+						FileClass baseFileClass = c.FindBaseClass( b => b is FileClass ) as FileClass;
+						if ( baseFileClass == null || baseFileClass.FindMemberDeep( m => m is ParentReference && ( m as ParentReference ).Type is FolderClass ) == null )
+						{
+#>
+
+[XmlIgnore]
+public string RelativeName { get { return <#=parentFolder.Name#>.RelativeName + @"\" + <#=valueName.Name#>; } }
+[XmlIgnore]
+public string RelativeNameExtension { get { return RelativeName + FileExtension; } }
+[XmlIgnore]
+public string FullName { get { return <#=parentFolder.Name#>.FullName + @"\" + <#=valueName.Name#>; } }
+[XmlIgnore]
+public string FullNameExtension { get { return FullName + FileExtension; } }
+public const string FileExtension = ".<#= group != null ? ( fileClass.FileExtension + group.PartialFileExtension ) : fileClass.FileExtension #>";
+[XmlIgnore]
+public string RootFolderRelativeName { get { return <#=parentFolder.Name#>.RootFolderRelativeName + <#=valueName.Name#>; } }
+<#+
+						}
+#>
+
+public override void Load()
+{
+	base.Load();
+<#+
+						PushIndent("\t");
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							if ( m is FileStorage )
+							{
+								FileStorage fileStorage = (FileStorage)m;
+#>
+if ( System.IO.File.Exists( FullNameExtension ) )
+{
+	FileStream filestream = new FileStream(FullNameExtension, FileMode.Open, FileAccess.Read );
+	XmlSerializer xmlSerializer = new XmlSerializer(typeof(<#=fileStorage.Type.QualifiedSerializationTypeName(group)#>), <#= Project.CoreNamespace #>.Serialization.Types<#= group == null ? "" : "_" + group.Name #> );
+	<#=m.Name#> = (<#=fileStorage.Type.QualifiedSerializationTypeName(group)#>)xmlSerializer.Deserialize(filestream);
+	filestream.Close();
+}
+<#+
+							}
+						}
+						PopIndent();
+#>
+}
+
+public override void Save()
+{
+	base.Save();
+<#+
+						PushIndent("\t");
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							if ( m is FileStorage )
+							{
+								FileStorage fileStorage = (FileStorage)m;						
+#>
+if ( <#=m.Name#> != null )
+{
+	XmlSerializer xmlSerializer = new XmlSerializer(typeof(<#=fileStorage.Type.QualifiedSerializationTypeName(group)#>), <#= Project.CoreNamespace #>.Serialization.Types<#= group == null ? "" : "_" + group.Name #> );
+	TextWriter textWriter = new StreamWriter(FullNameExtension);
+	xmlSerializer.Serialize(textWriter, <#=m.Name#>);
+	textWriter.Close();
+}
+<#+
+							}
+						}
+						PopIndent();
+#>
+}
+
+public override void SaveAs( string projectPath )
+{
+	base.SaveAs( projectPath );
+<#+
+						PushIndent("\t");
+						foreach( Member m in c.MembersByGroup(group) )
+						{
+							if ( m is FileStorage )
+							{
+								FileStorage fileStorage = (FileStorage)m;					
+#>
+if ( <#=m.Name#> != null )
+{
+	XmlSerializer xmlSerializer = new XmlSerializer(typeof(<#=fileStorage.Type.QualifiedSerializationTypeName(group)#>), <#= Project.CoreNamespace #>.Serialization.Types<#= group == null ? "" : "_" + group.Name #> );
+	TextWriter textWriter = new StreamWriter( projectPath + @"\" + RelativeNameExtension );
+	xmlSerializer.Serialize(textWriter, <#=m.Name#>);
+	textWriter.Close();
+}
+<#+
+							}
+						}
+						PopIndent();
+#>
+}
+<#+
+					}
+				} // is FileClass
+
+				// FOLDER
+
+				if ( c is FolderClass )
+				{
+					if ( c.FindBaseClass( b => b is FolderClass ) == null )
+					{
+						Member parentProject = c.FindMemberDeep( m => m is ParentReference && ( m as ParentReference ).Type is ProjectClass );
+						Member parentFolder = c.FindMemberDeep( m => m is ParentReference && ( m as ParentReference ).Type is FolderClass );
+						Member valueName = c.FindMemberDeep( m => m is ValueName );
+						if ( parentFolder != null && valueName != null )
+						{
+#>
+[XmlIgnore]
+public string RelativeName { get { return (<#=parentFolder.Name#> == null ? "" : <#=parentFolder.Name#>.RelativeName + @"\") + <#=valueName.Name#>; } }
+[XmlIgnore]
+public string RootFolderRelativeName { get { return <#=parentFolder.Name#> == null ? "" : <#=parentFolder.Name#>.RootFolderRelativeName + <#=valueName.Name#> + @"\"; } }
+<#+
+							if ( parentProject == null )
+							{
+#>
+[XmlIgnore]
+public string FullName { get { return <#=parentFolder.Name#>.FullName + @"\" + <#=valueName.Name#>; } }
+<#+
+							}
+						}
+						if ( parentProject != null && valueName != null )
+						{
+							if ( parentFolder == null )
+							{
+#>
+[XmlIgnore]
+public string RelativeName { get { return <#=valueName.Name#>; } }
+[XmlIgnore]
+public string RootFolderRelativeName { get { return <#=valueName.Name#> + @"\"; } }
+[XmlIgnore]
+public string FullName { get { return <#=parentProject.Name#>.ProjectPath + @"\" + <#=valueName.Name#>; } }
+<#+
+							}							
+							else
+							{
+#>
+[XmlIgnore]
+public string FullName { get { return (<#=parentFolder.Name#> == null ? <#=parentProject.Name#>.ProjectPath : <#=parentFolder.Name#>.FullName ) + @"\" + <#=valueName.Name#>; } }
+<#+
+							}
+						}
+					}
+#>
+
+public override void CreateDirectory(string projectPath)
+{
+	Directory.CreateDirectory(projectPath + @"\"+ RelativeName);
+	CreateDirectory_Base( projectPath );
+}
+protected override void CreateDirectory_Base(string projectPath)
+{
+	base.CreateDirectory_Base( projectPath );
+<#+
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Collection )
+						{
+							Collection collection = (Collection)m;
+							if ( collection.Type.ItemsClass is FolderClass )
+							{
+#>
+	foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+		collectionElement.CreateDirectory(projectPath);
+<#+
+							}
+						}
+						if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is FolderClass )
+							{
+#>
+	<#=m.Name#>.CreateDirectory(projectPath);
+<#+
+							}
+						}
+					}
+#>
+}
+
+public override void Load()
+{
+	base.Load();
+<#+
+					PushIndent("\t");
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Collection )
+						{
+							Collection collection = (Collection)m;				
+#>
+foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+	collectionElement.Load();		
+<#+
+						}
+						if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is FolderClass || value.Type is FileClass )
+							{
+#>
+<#=m.Name#>.Load();
+<#+
+							}
+						}						
+					}
+					PopIndent();
+#>
+}
+
+public override void Save()
+{
+	base.Save();
+<#+
+					PushIndent("\t");
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Collection )
+						{
+							Collection collection = (Collection)m;				
+#>
+foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+	collectionElement.Save();		
+<#+
+						}
+						if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is FolderClass || value.Type is FileClass )
+							{
+#>
+<#=m.Name#>.Save();
+<#+
+							}
+						}						
+					}
+					PopIndent();
+#>
+}
+
+public override void SaveAs(string projectPath)
+{
+	base.SaveAs( projectPath );
+<#+
+					PushIndent("\t");
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Collection )
+						{
+							Collection collection = (Collection)m;				
+#>
+foreach( <#=collection.Type.ItemsClass.QualifiedSerializationTypeName(group)#> collectionElement in <#=m.Name#> )
+	collectionElement.SaveAs( projectPath );		
+<#+
+						}
+						if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is FolderClass || value.Type is FileClass )
+							{
+#>
+<#=m.Name#>.SaveAs(projectPath);
+<#+
+							}
+						}						
+					}
+					PopIndent();
+#>
+}
+<#+
+				} // is FolderClass
+
+				// PROJECT
+
+				if ( c is ProjectClass )
+				{
+					ProjectClass projectClass = c as ProjectClass;
+
+#>
+
+[XmlIgnore] 
+public string ProjectPath;
+[XmlIgnore] 
+private string ProjectName;
+
+public const string	ProjectExtension = ".<#= group != null ? ( projectClass.FileExtension + group.PartialFileExtension ) : projectClass.FileExtension #>";
+
+[XmlIgnore] 
+private string FullName { get { return ProjectPath + @"\" + ProjectName; } }
+[XmlIgnore] 
+private string FullNameExtension { get { return FullName + ProjectExtension; } }
+
+static public <#=c.QualifiedSerializationTypeName(group)#> ProjectLoad(string projectFilenameFull)
+{
+	string projectPath = Path.GetDirectoryName( projectFilenameFull );
+	string projectName = Path.GetFileNameWithoutExtension( projectFilenameFull );
+
+	FileStream filestream = new FileStream(projectPath + @"\" + projectName + ProjectExtension, FileMode.Open, FileAccess.Read);
+	XmlSerializer xmlSerializer = new XmlSerializer(typeof( <#=c.QualifiedSerializationTypeName(group)#> ), <#= Project.CoreNamespace #>.Serialization.Types<#= group == null ? "" : "_" + group.Name #> );
+	<#=c.QualifiedSerializationTypeName(group)#> project = (<#=c.QualifiedSerializationTypeName(group)#>)xmlSerializer.Deserialize(filestream);
+	filestream.Close();
+
+	project.ProjectPath = projectPath;
+	project.ProjectName = projectName;
+
+	return project;
+}
+
+public void ProjectSave()
+{
+	XmlSerializer xmlSerializer = new XmlSerializer(typeof(<#=c.QualifiedSerializationTypeName(group)#>), <#= Project.CoreNamespace #>.Serialization.Types<#= group == null ? "" : "_" + group.Name #> );
+	TextWriter textWriter = new StreamWriter(FullNameExtension);
+	xmlSerializer.Serialize(textWriter, this);
+	textWriter.Close();
+}
+
+public void ProjectSaveAs(string projectFilenameFull)
+{
+	string projectPath = Path.GetDirectoryName( projectFilenameFull );
+	string projectName = Path.GetFileNameWithoutExtension( projectFilenameFull );
+	
+	XmlSerializer xmlSerializer = new XmlSerializer(typeof(<#=c.QualifiedSerializationTypeName(group)#>), <#= Project.CoreNamespace #>.Serialization.Types<#= group == null ? "" : "_" + group.Name #> );
+	TextWriter textWriter = new StreamWriter(projectPath + @"\" + projectName + ProjectExtension);
+	xmlSerializer.Serialize(textWriter, this);
+	textWriter.Close();
+}
+
+public override void Load()
+{
+<#+
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is FolderClass )
+							{
+#>
+	<#=m.Name#>.Load();
+<#+
+							}
+						}
+					}
+#>
+}
+
+public override void Save()
+{
+	ProjectSave();
+<#+
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is FolderClass )
+							{
+#>
+	<#=m.Name#>.CreateDirectory(ProjectPath);
+	<#=m.Name#>.Save();
+<#+
+							}
+						}
+					}
+#>
+}
+
+public override void SaveAs(string projectFilenameFull)
+{
+	string projectPath = Path.GetDirectoryName( projectFilenameFull );
+	ProjectSaveAs( projectFilenameFull );
+<#+
+					foreach( Member m in c.MembersByGroup(group) )
+					{
+						if ( m is Value )
+						{
+							Value value = (Value)m;
+							if ( value.Type is FolderClass )
+							{
+#>
+	<#=m.Name#>.CreateDirectory(projectPath);
+	<#=m.Name#>.SaveAs( projectPath );
+<#+
+							}
+						}
+					}
+#>
+}
+
+<#+
+					if ( group == null )
+					{
+#>
+static public <#=c.QualifiedSerializationTypeName(group)#> ProjectCreate(string projectFilenameFull)
+{
+	string projectPath = Path.GetDirectoryName( projectFilenameFull );
+	string projectName = Path.GetFileNameWithoutExtension( projectFilenameFull );
+
+	<#=c.QualifiedSerializationTypeName(group)#> project = new <#=c.QualifiedSerializationTypeName(group)#>();
+	project.ProjectName = projectName;
+	project.ProjectPath = projectPath;
+	return project;
+}
+
+<#+
+					}
+#>
+
+static public <#=c.QualifiedSerializationTypeName(group)#> ProjectToSerialization( <#= c.QualifiedTypeName #> data )
+{
+	<#=c.QualifiedSerializationTypeName(group)#> project = new <#=c.QualifiedSerializationTypeName(group)#>();	
+	project.ToSerialization( data );
+	return project;
+}
+
+<#+
+				} // is ProjectClass
+				
+				PopIndent();
+				WriteLine( "}" );
+			
+			} // end of foreach MetadataMemberGroup
+
+			// PROJECT EXTENSION METHODS
+
+			if ( c is ProjectClass )
+			{
+				ProjectClass projectClass = c as ProjectClass;
+				
+				WriteLine("");
+
+				WriteLine("public static class " + c.TypeName + "Ext" );
+				WriteLine("{");
+				PushIndent("\t");
+#>
+public static string ProjectExtension( this <#=c.QualifiedTypeName#> nullthis )
+{
+	return ".<#= projectClass.FileExtension #>";
+}
+
+public static <#=c.QualifiedTypeName#> ProjectCreate( this <#=c.QualifiedTypeName#> nullthis, string projectFilenameFull)
+{
+	<#= c.QualifiedTypeName #> dataProject = new <#= c.QualifiedTypeName #>();
+
+	<#=c.QualifiedSerializationTypeName(null)#> project = <#=c.QualifiedSerializationTypeName(null)#>.ProjectCreate( projectFilenameFull );
+	project.FromSerializationConstruct( dataProject );
+
+	core.StringToObject stringToObject = new core.StringToObject();
+	project.CreateGuidToObjectMapping( stringToObject );
+
+	project.FromSerialization( stringToObject );	
+
+	return dataProject;
+}
+
+public static <#=c.QualifiedTypeName#> ProjectLoad( this <#=c.QualifiedTypeName#> nullthis, string projectFilenameFull)
+{
+<#+
+				PushIndent("\t");
+				foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+				{			
+					if ( !c.HasMembersOfGroup(group) )
+						continue;
+#>
+<#=c.QualifiedSerializationTypeName(group)#> project<#= group == null ? "" : group.Name #> = <#=c.QualifiedSerializationTypeName(group)#>.ProjectLoad( projectFilenameFull );
+<#+
+					if ( group == null )
+					{
+#>
+<#= c.QualifiedTypeName #> dataProject = new <#= c.QualifiedTypeName #>();
+project.FromSerializationConstruct( dataProject );
+
+core.StringToObject stringToObject = new core.StringToObject();
+project.CreateGuidToObjectMapping( stringToObject );
+<#+
+					}
+					else
+					{
+#>
+project<#= group.Name #>.FromSerializationBind( dataProject, stringToObject );
+<#+
+					}
+#>
+project<#= group == null ? "" : group.Name #>.FromSerialization( stringToObject );
+<#+
+					WriteLine( "" );
+				}
+				PopIndent();
+#>
+	return dataProject;
+}
+
+public static void ProjectSave( this <#=c.QualifiedTypeName#> mainProject )
+{
+<#+
+				PushIndent("\t");
+				foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+				{			
+					if ( !c.HasMembersOfGroup(group) )
+						continue;
+#>
+<#=c.QualifiedSerializationTypeName(group)#> project<#= group == null ? "" : group.Name #> = <#=c.QualifiedSerializationTypeName(group)#>.ProjectToSerialization( mainProject );
+project<#= group == null ? "" : group.Name #>.ProjectSave();
+<#+
+				}
+				PopIndent();
+#>
+}
+
+public static void ProjectSaveAs( this <#=c.QualifiedTypeName#> mainProject, string projectFilenameFull )
+{
+<#+
+				PushIndent("\t");
+				foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+				{			
+					if ( !c.HasMembersOfGroup(group) )
+						continue;
+#>
+<#=c.QualifiedSerializationTypeName(group)#> project<#= group == null ? "" : group.Name #> = <#=c.QualifiedSerializationTypeName(group)#>.ProjectToSerialization( mainProject );
+project<#= group == null ? "" : group.Name #>.ProjectSaveAs(projectFilenameFull);
+<#+
+				}
+				PopIndent();
+#>
+}
+
+public static void Load( this <#=c.QualifiedTypeName#> mainProject )
+{
+<#+
+				PushIndent("\t");
+				foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+				{			
+					if ( !c.HasMembersOfGroup(group) )
+						continue;
+#>
+
+<#=c.QualifiedSerializationTypeName(group)#> project<#= group == null ? "" : group.Name #> = <#=c.QualifiedSerializationTypeName(group)#>.ProjectToSerialization( mainProject );
+project<#= group == null ? "" : group.Name #>.Load();
+<#+  
+					if ( group == null )
+					{
+#>
+project.FileStorage_FromSerializationConstruct();
+
+core.StringToObject stringToObject = new core.StringToObject();
+project.CreateGuidToObjectMapping( stringToObject );
+
+project.FileStorage_FromSerialization( stringToObject );
+<#+
+					}
+					else
+					{
+#>
+project<#= group.Name #>.FileStorage_FromSerializationBind( stringToObject );
+project<#= group.Name #>.FileStorage_FromSerialization( stringToObject );
+<#+
+					}
+				}
+				PopIndent();
+#>
+}
+
+public static void Save( this <#=c.QualifiedTypeName#> mainProject )
+{
+<#+
+				PushIndent("\t");
+				foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+				{			
+					if ( !c.HasMembersOfGroup(group) )
+						continue;
+#>
+
+<#=c.QualifiedSerializationTypeName(group)#> project<#= group == null ? "" : group.Name #> = <#=c.QualifiedSerializationTypeName(group)#>.ProjectToSerialization( mainProject );
+project<#= group == null ? "" : group.Name #>.FileStorage_ToSerialization();
+project<#= group == null ? "" : group.Name #>.Save();
+<#+
+				}
+				PopIndent();
+#>
+}
+
+public static void SaveAs( this <#=c.QualifiedTypeName#> mainProject, string projectFilenameFull )
+{
+<#+
+				PushIndent("\t");
+				foreach ( MetadataMemberGroup group in Project.MemberGroupsAll )
+				{			
+					if ( !c.HasMembersOfGroup(group) )
+						continue;
+#>
+
+<#=c.QualifiedSerializationTypeName(group)#> project<#= group == null ? "" : group.Name #> = <#=c.QualifiedSerializationTypeName(group)#>.ProjectToSerialization( mainProject );
+project<#= group == null ? "" : group.Name #>.FileStorage_ToSerialization();
+project<#= group == null ? "" : group.Name #>.SaveAs(projectFilenameFull);
+<#+
+				}
+				PopIndent();
+#>
+}
+<#+				
+				PopIndent();
+				WriteLine("} // end of static class " + c.TypeName + "Ext" );
+			} // is ProjectClass
+						
+			if ( c.Namespace.Length > 0 )
+			{
+				PopIndent();
+				WriteLine( "} // namespace " + c.Namespace );
+			}
+
+			WriteLine( "" );
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+

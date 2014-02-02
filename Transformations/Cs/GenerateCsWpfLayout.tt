@@ -1,0 +1,1052 @@
+﻿<#
+	{
+		CsWpfLayoutCore core = new CsWpfLayoutCore( this, project, csReflectionMetadataNamespace );
+		core.Output.File = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile ) + ".Layout.cs";
+		core.Output.Project = csOutputProject;
+		core.Render();
+	}
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		if ( metadataFile.GenerateGui && metadataFile.Content.Classes.GetEnumerator().MoveNext() )
+		{	
+			CsWpfLayout file = new CsWpfLayout( this, project, csReflectionMetadataNamespace, metadataFile );
+			file.Output.File = metadataFile.RelativeName + ".Layout.cs";
+			file.Output.Project = csOutputProject;
+			file.Render();
+		}
+	}
+#>
+<#+
+public class CsWpfLayoutCore : Template
+{
+	protected GeneratedTextTransformation	TextTransformation;
+	protected MetadataProject				Project;
+	protected string						CsReflectionMetadataNamespace;
+	
+	public CsWpfLayoutCore( GeneratedTextTransformation textTransformation, MetadataProject project, string csReflectionMetadataNamespace )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CsReflectionMetadataNamespace = csReflectionMetadataNamespace;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+using System.Windows;
+using System.Windows.Controls;
+
+namespace gui
+{
+	public static class Layouts
+	{
+		delegate Layout DelegateCreateLayout();
+	
+		private static Dictionary<System.Type,DelegateCreateLayout> DataTypeToLayoutType = new Dictionary<System.Type,DelegateCreateLayout>();	
+
+		static Layouts()
+		{
+<#+
+		PushIndent("\t\t\t");
+		foreach( MetadataClass c in Project.Metadata.Classes )
+			if ( !(c is AbstractClass ) )
+				WriteLine( "DataTypeToLayoutType.Add( typeof(" + c.QualifiedTypeName + "), () => { return new " + c.QualifiedTypeName + "Layout(); } );" );
+		PopIndent();
+#>
+		}
+		
+		public static T CreateLayoutFor< T >( core.DataObject dataObject ) where T : Layout
+		{
+			DelegateCreateLayout delegateCreateLayout;
+			if ( DataTypeToLayoutType.TryGetValue( dataObject.GetType(), out delegateCreateLayout ) )
+			{
+				Layout layout = delegateCreateLayout();
+				T typedLayout = layout as T;
+				if ( typedLayout == null )
+					throw new core.TypeMappingException( dataObject.GetType() );
+				return typedLayout;
+			}
+			return null;	
+		}
+	}
+	
+	public abstract class ILayout
+	{
+		protected virtual void NewObject( core.DataObject newObject, core.DataObject deletedObject ) {}
+		protected virtual void DeleteObject( core.DataObject deletedObject ) {}
+	
+		protected virtual bool BrowseClicked( System.Type referenceType, string title, Predicate< core.DataObject > predicate, core.DataObject currenctReference, out core.DataObject reference )
+		{
+			reference = null;
+			return false;
+		}
+		
+		protected virtual void NameChanged() {}
+<#+
+		if ( CsReflectionMetadataNamespace.Length > 0 )
+		{
+#>		
+		protected virtual void MemberChanged_Value( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.Value member, core.DataObject dataValue ) {}
+		protected virtual void MemberChanged_Reference( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.Reference member, core.ReferenceObject referenceValue ) {}
+		protected virtual void MemberChanged_ParentReference( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.ParentReference member, core.ReferenceObject referenceValue ) {}
+		protected virtual void MemberChanged_FileStorage( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.FileStorage member, core.ReferenceObject referenceValue ) {}
+<#+
+		}
+#>	}
+
+	public abstract partial class Layout : ILayout
+	{
+		core.DataObject This;
+		public Layout	ParentLayout;
+		protected bool	IsObjectDataToControls = false;
+		
+		public delegate void	ObjectChanged_f ();
+		public ObjectChanged_f	ObjectChanged = null;
+		
+		public virtual void		CreateControls ( core.DataObject dataObject, UIElementCollection collection ) {}
+		protected virtual void	CreateControls_Base ( core.DataObject dataObject, UIElementCollection collection ) 
+		{
+			This = dataObject;
+		}
+
+		public virtual void		ObjectDataToControls() {}
+		protected virtual void	ObjectDataToControls_Base() {}	
+	}	
+} // gui
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+} // CsWpfLayoutCore
+#>
+<#+
+public class CsWpfLayout : Template
+{
+	protected GeneratedTextTransformation	TextTransformation;
+	protected MetadataFile					File;
+	protected MetadataProject				Project;
+	protected string						CsReflectionMetadataNamespace;
+	
+	public CsWpfLayout( GeneratedTextTransformation textTransformation, MetadataProject project, string csReflectionMetadataNamespace, MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CsReflectionMetadataNamespace = csReflectionMetadataNamespace;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System.Windows;
+using System.Windows.Controls;
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine("");
+			PushIndent("\t");
+		}
+
+		foreach( MetadataClass c in File.Content.Classes )
+		{
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + c.Namespace );
+				WriteLine( "{" );
+				PushIndent("\t");
+			}
+			
+			string baseDeclaration = "gui.Layout";
+			if ( c.BaseClass != null )
+				baseDeclaration = c.BaseClass.TypeName + "Layout";		
+			
+			string classModifiers = "public";
+			if ( c is AbstractClass )
+				classModifiers += " abstract";
+			classModifiers += " partial";					
+			
+			WriteLine( classModifiers + " class " + c.TypeName + "Layout : " + baseDeclaration );
+			WriteLine( "{" );
+			PushIndent("\t");
+
+#>
+private <#=c.QualifiedTypeName#> This = null;
+
+<#+
+            if ( c.HasMinMax )
+            {
+#>
+private <#=c.QualifiedTypeName#> ThisMin;
+private <#=c.QualifiedTypeName#> ThisMax;
+public void SetMinMax( <#=c.QualifiedTypeName#> minimum, <#=c.QualifiedTypeName#> maximum )
+{
+	ThisMin = minimum;
+	ThisMax = maximum;
+}
+
+<#+
+            }
+            if ( c.HasReferencesDeep || c is FolderClass || c is FileClass || c is ProjectClass )
+            {
+#>
+private Label TypeLabel;
+<#+
+            }
+			if ( c.IsReferenced || c is FolderClass || c is FileClass )
+			{
+#>
+private Label GuidLabel;
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental )
+					{
+						if ( value.Type is FundamentalBool )
+						{
+#>
+private CheckBox <#=m.Name#>;
+private void <#=m.Name#>_Clicked(object sender, RoutedEventArgs e)
+{
+	if ( IsObjectDataToControls )
+		return;
+		
+	This.<#=m.Name#> = <#=m.Name#>.IsChecked ?? false;
+	<#=m.Name#>_Changed();
+}
+<#+
+						}
+						else if ( value.Type is FundamentalInt )
+						{
+#>
+private Slider <#=m.Name#> = null;
+private TextBox <#=m.Name#>_TextBox;
+private void <#=m.Name#>_ValueChanged(object sender, RoutedEventArgs e)
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	This.<#=m.Name#> = (<#=value.Type.QualifiedTypeName#>)<#=m.Name#>.Value;
+	<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+	<#=m.Name#>_Changed();
+}
+private void <#=m.Name#>_LostKeyboardFocus( object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e )
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	bool error = false;
+	try
+	{
+		This.<#=m.Name#> = (<#=value.Type.QualifiedTypeName#>)System.Convert.ToInt32(<#=m.Name#>_TextBox.Text);
+<#+
+							// clamp
+							if ( value.MinMaxDefined )
+							{
+#>
+		if ( This.<#=m.Name#> < <#=value.Min#> ) { This.<#=m.Name#> = <#=value.Min#>; error = true; }
+		if ( This.<#=m.Name#> > <#=value.Max#> ) { This.<#=m.Name#> = <#=value.Max#>; error = true; }
+<#+
+							}
+							if ( c.HasMinMax )
+							{
+#>
+		if ( ThisMin != null && This.<#=m.Name#> < ThisMin.<#=m.Name#> ) { This.<#=m.Name#> = ThisMin.<#=m.Name#>; error = true; }
+		if ( ThisMax != null && This.<#=m.Name#> > ThisMax.<#=m.Name#> ) { This.<#=m.Name#> = ThisMax.<#=m.Name#>; error = true; }
+<#+
+							}
+#>
+	}
+	catch ( System.FormatException ) { error = true; }
+	catch ( System.OverflowException ) { error = true; }
+
+	if ( error )
+		<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+	else
+		<#=m.Name#>_Changed();
+		
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.Value = This.<#=m.Name#>;
+}
+<#+
+						}
+						else if ( value.Type is FundamentalByte )
+						{
+#>
+private Slider <#=m.Name#>;
+private TextBox <#=m.Name#>_TextBox;
+private void <#=m.Name#>_ValueChanged(object sender, RoutedEventArgs e)
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	This.<#=m.Name#> = (<#=value.Type.QualifiedTypeName#>)<#=m.Name#>.Value;
+	<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+	<#=m.Name#>_Changed();	
+}
+private void <#=m.Name#>_LostKeyboardFocus( object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e )
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	bool error = false;
+	try
+	{
+		This.<#=m.Name#> = (<#=value.Type.QualifiedTypeName#>)System.Convert.ToByte(<#=m.Name#>_TextBox.Text);
+<#+
+							// clamp
+							if ( value.MinMaxDefined )
+							{
+#>
+		if ( This.<#=m.Name#> < <#=value.Min#> ) { This.<#=m.Name#> = <#=value.Min#>; error = true; }
+		if ( This.<#=m.Name#> > <#=value.Max#> ) { This.<#=m.Name#> = <#=value.Max#>; error = true; }
+<#+
+							}
+							if ( c.HasMinMax )
+							{
+#>
+		if ( ThisMin != null && This.<#=m.Name#> < ThisMin.<#=m.Name#> ) { This.<#=m.Name#> = ThisMin.<#=m.Name#>; error = true; }
+		if ( ThisMax != null && This.<#=m.Name#> > ThisMax.<#=m.Name#> ) { This.<#=m.Name#> = ThisMax.<#=m.Name#>; error = true; }
+<#+
+							}
+#>
+	}
+	catch ( System.FormatException ) { error = true; }
+	catch ( System.OverflowException ) { error = true; }
+
+	if ( error )
+		<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+	else
+		<#=m.Name#>_Changed();
+		
+	<#=m.Name#>.Value = This.<#=m.Name#>;
+}
+<#+
+						}
+						else if ( value.Type is FundamentalFloat )
+						{
+#>
+private Slider <#=m.Name#> = null;
+private TextBox <#=m.Name#>_TextBox;
+private void <#=m.Name#>_ValueChanged(object sender, RoutedEventArgs e)
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	This.<#=m.Name#> = (<#=value.Type.QualifiedTypeName#>)<#=m.Name#>.Value;
+	<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+	<#=m.Name#>_Changed();
+}
+private void <#=m.Name#>_LostKeyboardFocus( object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e )
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	bool error = false;
+	try
+	{
+		This.<#=m.Name#> = (<#=value.Type.QualifiedTypeName#>)System.Convert.ToSingle(<#=m.Name#>_TextBox.Text);
+<#+
+							// clamp
+							if ( value.MinMaxDefined )
+							{
+#>
+		if ( This.<#=m.Name#> < <#=value.Min#> ) { This.<#=m.Name#> = <#=value.Min#>; error = true; }
+		if ( This.<#=m.Name#> > <#=value.Max#> ) { This.<#=m.Name#> = <#=value.Max#>; error = true; }
+<#+
+							}
+							if ( c.HasMinMax )
+							{
+#>
+		if ( ThisMin != null && This.<#=m.Name#> < ThisMin.<#=m.Name#> ) { This.<#=m.Name#> = ThisMin.<#=m.Name#>; error = true; }
+		if ( ThisMax != null && This.<#=m.Name#> > ThisMax.<#=m.Name#> ) { This.<#=m.Name#> = ThisMax.<#=m.Name#>; error = true; }
+<#+
+							}							
+#>
+	}
+	catch ( System.FormatException ) { error = true; }
+	catch ( System.OverflowException ) { error = true; }
+
+	if ( error )
+		<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+	else
+		<#=m.Name#>_Changed();
+	
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.Value = This.<#=m.Name#>;
+}
+<#+
+						}
+						else if ( value.Type is FundamentalString )
+						{
+#>
+private TextBox <#=m.Name#>;
+private void <#=m.Name#>_TextChanged(object sender, RoutedEventArgs e)
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	This.<#=m.Name#> = <#=m.Name#>.Text;
+	<#=m.Name#>_Changed();	
+<#+
+							if ( m is ValueName )
+								WriteLine( "\tNameChanged();" );
+#>
+}
+<#+
+						}
+						else
+							Error( "Unknown metadata type " + value.Type.QualifiedTypeName );
+						WriteLine("");
+					}
+					else if ( value.Type is Enumeration )
+					{
+						Enumeration enumeration = (Enumeration)value.Type;
+						foreach ( Enumerator enumerator in enumeration.Enumerators )
+						{
+#>
+private RadioButton <#=m.Name#>_<#=enumerator.Name#>;
+private void <#=m.Name#>_<#=enumerator.Name#>_Checked(object sender, RoutedEventArgs e)
+{
+	if ( IsObjectDataToControls )
+		return;
+
+	This.<#=m.Name#> = <#= enumeration.QualifiedTypeName + "." + enumerator.Name #>;
+	<#=m.Name#>_Changed();	
+}
+<#+
+						}
+					}
+					else if ( value.Type is MetadataClass && !value.IsGuiTreeNode )
+					{
+						MetadataClass metadataClass = value.Type as MetadataClass;
+#>
+private <#=value.Type.QualifiedTypeName#>Layout <#=m.Name#>Layout;
+private GroupBox <#=m.Name#>;
+<#+
+						if ( value.IsPolymorphic )
+						{
+#>
+private ComboBox <#=m.Name#>ComboBox;
+void <#=m.Name#>_SelectionChanged( object sender, SelectionChangedEventArgs args )
+{
+	switch ( <#=m.Name#>ComboBox.SelectedIndex )
+	{
+	case 0:
+		This.<#= m.Name #> = null;
+		<#= m.Name #>Layout = null;
+		<#= m.Name #>.Content = null;
+		break;
+<#+
+							int index = 0;
+							foreach( MetadataClass derivedClass in Project.Metadata.BaseAndDerivedClasses( metadataClass ) )
+								if ( !(derivedClass is AbstractClass) )
+								{
+									++index;
+#>
+	case <#= index #>:
+		{
+			<#=value.Type.QualifiedTypeName#> deletedObject = This.<#= m.Name #>;
+			This.<#= m.Name #> = new <#=derivedClass.QualifiedTypeName#>();
+			<#= m.Name #>Layout = gui.Layouts.CreateLayoutFor< <#=value.Type.QualifiedTypeName#>Layout >( This.<#=m.Name#> );
+			<#= m.Name #>Layout.ParentLayout = this;
+			<#= m.Name #>Layout.ObjectChanged += <#=m.Name#>_Changed;
+			StackPanel panel = new StackPanel();
+			<#=m.Name#>Layout.CreateControls( This.<#=m.Name#>, panel.Children );
+			NewObject( This.<#=m.Name#>, deletedObject );
+			<#=m.Name#>Layout.ObjectDataToControls();
+			<#=m.Name#>.Content = panel;
+		}
+		break;
+<#+
+								}
+#>		
+		
+	}
+}
+<#+
+						} // value.IsPolymorphic
+					}
+#>
+private void <#=m.Name#>_Changed()
+{
+<#+
+							if ( CsReflectionMetadataNamespace.Length > 0 )
+							{
+								if ( c.IsReferenced )
+								{
+									if ( value.Type is Fundamental || value.Type is Enumeration )
+									{
+#>
+	MemberChanged_Value( <#=c.TypeName#>_Reflection.MetadataClass, This, <#=c.TypeName#>_Member_<#=m.Name#>.Member, new <#=value.Type.QualifiedTypeName#>_Boxed { value = This.<#=m.Name#> } );
+<#+
+									}
+									else
+									{
+#>
+	MemberChanged_Value( <#=c.TypeName#>_Reflection.MetadataClass, This, <#=c.TypeName#>_Member_<#=m.Name#>.Member, This.<#=m.Name#> );
+<#+
+									}
+								}
+							}
+#>
+	if ( ObjectChanged != null )
+		ObjectChanged();
+}
+<#+
+				} // m is Value
+				else if ( m is Reference )
+				{
+					Reference reference = (Reference)m;
+#>
+private TextBox <#=m.Name#>;
+private TextBox <#=m.Name#>Guid;
+private void <#=m.Name#>_Clicked(object sender, RoutedEventArgs eventArgs )
+{
+	core.DataObject reference = null;
+
+	bool result = BrowseClicked( typeof(<#= reference.Type.QualifiedTypeName #>)
+		, "<#= reference.Type.TypeName #>"
+	    , ( dataObject ) => 
+	    { 
+<#+
+	                WriteLine("\t\t\t// substitute");
+	                foreach ( MetadataClass metadataClass in Project.Metadata.Classes )
+	                {
+		                if ( metadataClass.IsLessEq( reference.Type ) )
+			                WriteLine("\t\t\tif ( dataObject is " + metadataClass.QualifiedTypeName + " ) return true;");
+	                }
+	                WriteLine("\t\t\t// aggregate");
+	                foreach ( MetadataClass metadataClass in Project.Metadata.Classes )
+	                {
+		                if ( metadataClass.ContainsObjects( reference.Type ) )
+			                WriteLine("\t\t\tif ( dataObject is " + metadataClass.QualifiedTypeName + " ) return true;");
+	                }
+#>	    	return false;
+        }   
+        , This.<#=m.Name#>     
+        , out reference
+    );
+	
+	if ( result )
+	{
+		if ( reference == null )
+		{
+			This.<#=m.Name#> = null;
+			<#=m.Name#>.Text = "[null]";
+			<#=m.Name#>Guid.Text = "";
+		}
+		else if ( reference is <#= reference.Type.QualifiedTypeName #> )
+		{			
+			This.<#=m.Name#> = (<#= reference.Type.QualifiedTypeName #>)reference;
+<#+			
+                    Member memberValueName = reference.Type.FindMemberDeep( member => member is ValueName );
+                    if ( memberValueName != null )
+                    {
+#>
+			<#=m.Name#>.Text = This.<#=m.Name#> == null ? "[null]" : This.<#=m.Name#>.<#=memberValueName.Name#>;
+<#+
+                    }
+                    else
+                    {
+#>
+			<#=m.Name#>.Text = This.<#=m.Name#> == null ? "[null]" : This.<#=m.Name#>.GetType().Name;
+<#+
+                    }
+#>			
+			<#=m.Name#>Guid.Text = This.<#=m.Name#> == null ? "" : This.<#=m.Name#>.Guid.ToOptString();	
+		}		
+		<#=m.Name#>_Changed();
+	}	
+}
+private void <#=m.Name#>_Changed()
+{
+<#+
+							if ( CsReflectionMetadataNamespace.Length > 0 )
+							{
+								if ( c.IsReferenced )
+								{
+#>
+	MemberChanged_Reference( <#=c.TypeName#>_Reflection.MetadataClass, This, <#=c.TypeName#>_Member_<#=m.Name#>.Member, This.<#=m.Name#> );
+<#+
+								}
+							}
+#>
+	if ( ObjectChanged != null )
+		ObjectChanged();
+}
+<#+
+				} // m is Reference
+			} // foreach Members
+#>
+
+public override void CreateControls ( core.DataObject dataObject, UIElementCollection collection )
+{
+<#+
+            if ( c.HasReferencesDeep || c is FolderClass || c is FileClass || c is ProjectClass )
+            {
+#>
+	{
+		TypeLabel = new Label();
+		collection.Add( TypeLabel );		
+	}
+<#+
+            }
+			if ( c.IsReferenced || c is FolderClass || c is FileClass )
+			{
+#>
+	{
+		GuidLabel = new Label();
+		collection.Add( GuidLabel );
+	}
+<#+
+			}
+#>
+	CreateControls_Base( dataObject, collection );
+}
+protected override void CreateControls_Base ( core.DataObject dataObject, UIElementCollection collection )
+{
+	This = (<#=c.QualifiedTypeName#>)dataObject;
+	base.CreateControls_Base( dataObject, collection );
+<#+			
+			PushIndent("\t");
+			foreach( Member m in c.Members )
+			{
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental )
+					{
+						if( value.Type is FundamentalBool )
+						{
+#>
+{
+	<#=m.Name#> = new CheckBox { VerticalAlignment = VerticalAlignment.Center };
+	<#=m.Name#>.Click += <#=m.Name#>_Clicked;
+	DockPanel panel = new DockPanel();
+	panel.Children.Add( new Label { Content = "<#=m.Name#>" } );
+	panel.Children.Add( <#=m.Name#> );
+	collection.Add( panel );
+}
+<#+				
+						}
+						else if ( value.Type is FundamentalInt )
+						{
+							int valueMin = value.Min.Length > 0 ? (int)System.Convert.ToInt32( value.Min ) : 0;
+							int valueMax = value.Max.Length > 0 ? (int)System.Convert.ToInt32( value.Max ) : 0;
+							bool ticksDefined = valueMax - valueMin < 32;
+#>
+{
+	<#=m.Name#>_TextBox = new TextBox { MinWidth = 64 };
+	<#=m.Name#>_TextBox.LostKeyboardFocus += <#=m.Name#>_LostKeyboardFocus;
+	DockPanel panel = new DockPanel();
+	panel.Children.Add( new Label { Content = "<#=m.Name#>" } );	
+	panel.Children.Add( <#=m.Name#>_TextBox );
+<#+
+							if ( value.MinMaxDefined || c.HasMinMax )
+							{
+#>
+	<#=m.Name#> = new Slider(); 
+	panel.Children.Add( <#=m.Name#> );
+<#+
+								if ( value.MinMaxDefined )
+								{
+#>
+	<#=m.Name#>.Minimum = <#=value.Min#>;
+	<#=m.Name#>.Maximum = <#=value.Max#>;
+<#+
+								}
+								if ( c.HasMinMax )
+								{
+#>
+	if ( ThisMin != null && ThisMax != null )
+	{
+		<#=m.Name#>.Minimum = ThisMin.<#=m.Name#>;
+		<#=m.Name#>.Maximum = ThisMax.<#=m.Name#>;
+	}
+<#+									
+								}
+								if ( ticksDefined )
+								{
+#>
+	<#=m.Name#>.IsSnapToTickEnabled = true;
+	<#=m.Name#>.TickPlacement = System.Windows.Controls.Primitives.TickPlacement.BottomRight;
+	<#=m.Name#>.TickFrequency = 1;
+<#+
+								}
+#>
+	<#=m.Name#>.ValueChanged += <#=m.Name#>_ValueChanged; // must be the last
+<#+
+							}							
+#>		
+	collection.Add( panel );
+}
+<#+				
+						}
+						else if ( value.Type is FundamentalByte )
+						{
+							int valueMin = value.Min.Length > 0 ? (byte)System.Convert.ToByte( value.Min ) : 0;
+							int valueMax = value.Max.Length > 0 ? (byte)System.Convert.ToByte( value.Max ) : 0;
+#>
+{
+	<#=m.Name#>_TextBox = new TextBox { MinWidth = 64 };
+	<#=m.Name#>_TextBox.LostKeyboardFocus += <#=m.Name#>_LostKeyboardFocus;
+	DockPanel panel = new DockPanel();
+	panel.Children.Add( new Label { Content = "<#=m.Name#>" } );	
+	panel.Children.Add( <#=m.Name#>_TextBox );
+	<#=m.Name#> = new Slider(); 
+	panel.Children.Add( <#=m.Name#> );
+<#+
+							if ( value.MinMaxDefined )
+							{
+#>
+	<#=m.Name#>.Minimum = <#=value.Min#>;
+	<#=m.Name#>.Maximum = <#=value.Max#>;
+<#+
+							}
+							else
+							{
+#>
+	<#=m.Name#>.Minimum = 0;
+	<#=m.Name#>.Maximum = 255;
+<#+
+							}
+
+							if ( c.HasMinMax )
+							{
+#>
+	if ( ThisMin != null && ThisMax != null )
+	{
+		<#=m.Name#>.Minimum = ThisMin.<#=m.Name#>;
+		<#=m.Name#>.Maximum = ThisMax.<#=m.Name#>;
+	}
+<#+
+							}
+#>
+	<#=m.Name#>.ValueChanged += <#=m.Name#>_ValueChanged; // must be the last
+
+	collection.Add( panel );
+}
+<#+				
+						}
+						else if ( value.Type is FundamentalFloat )
+						{
+#>
+{
+	<#=m.Name#>_TextBox = new TextBox { MinWidth = 64 };
+	<#=m.Name#>_TextBox.LostKeyboardFocus += <#=m.Name#>_LostKeyboardFocus;
+	DockPanel panel = new DockPanel();
+	panel.Children.Add( new Label { Content = "<#=m.Name#>" } );	
+	panel.Children.Add( <#=m.Name#>_TextBox );
+<#+
+							if ( value.MinMaxDefined || c.HasMinMax )
+							{
+#>
+	<#=m.Name#> = new Slider();
+	panel.Children.Add( <#=m.Name#> );
+<#+
+								if ( value.MinMaxDefined )
+								{
+#>
+	<#=m.Name#>.Minimum = <#=value.Min#>;
+	<#=m.Name#>.Maximum = <#=value.Max#>;
+<#+
+								}
+								if ( c.HasMinMax )
+								{
+#>
+	if ( ThisMin != null && ThisMax != null )
+	{
+		<#=m.Name#>.Minimum = ThisMin.<#=m.Name#>;
+		<#=m.Name#>.Maximum = ThisMax.<#=m.Name#>;
+	}
+<#+
+								}
+#>
+	<#=m.Name#>.ValueChanged += <#=m.Name#>_ValueChanged; // must be the last
+<#+
+							}
+#>		
+	collection.Add( panel );
+}
+<#+				
+						}
+						else if ( value.Type is FundamentalString )
+						{
+#>
+{
+	<#=m.Name#> = new TextBox();
+	<#=m.Name#>.TextChanged += <#=m.Name#>_TextChanged;
+	DockPanel panel = new DockPanel();
+	panel.Children.Add( new Label{ Content = "<#=m.Name#>" } );
+	panel.Children.Add( <#=m.Name#> );
+	collection.Add( panel );
+}
+<#+				
+						}
+						else
+							TextTransformation.Error( "Unknown metadata type " + value.Type.QualifiedTypeName );
+						WriteLine("");
+					}
+					else if ( value.Type is Enumeration )
+					{
+						Enumeration enumeration = (Enumeration)value.Type;
+#>
+{
+	DockPanel panel = new DockPanel();
+	StackPanel stackPanel = new StackPanel();
+<#+
+						foreach ( Enumerator enumerator in enumeration.Enumerators )
+						{
+#>
+	<#=m.Name#>_<#=enumerator.Name#> = new RadioButton { GroupName="<#=m.Name#>", Content="<#=enumerator.Name#>" };
+	<#=m.Name#>_<#=enumerator.Name#>.Checked += <#=m.Name#>_<#=enumerator.Name#>_Checked;
+	stackPanel.Children.Add( <#=m.Name#>_<#=enumerator.Name#> );
+<#+
+						}
+#>
+	panel.Children.Add( new Label{ Content = "<#=m.Name#>" } );
+	panel.Children.Add( stackPanel );
+	collection.Add( panel );
+}
+
+<#+
+					}						
+					else if ( value.Type is MetadataClass && !value.IsGuiTreeNode )
+					{
+						MetadataClass metadataClass = value.Type as MetadataClass;
+#>
+{
+	DockPanel dockPanel = new DockPanel();
+	dockPanel.Children.Add( new Label { Content = "<#=m.Name#>" } );
+<#+
+						if ( value.IsPolymorphic )
+						{
+#>
+	<#=m.Name#>ComboBox = new ComboBox { IsEditable = false, IsReadOnly = true, MinWidth = 128 };
+	<#=m.Name#>ComboBox.Items.Add("[null]");
+	if ( This.<#=m.Name#> == null )
+		<#=m.Name#>ComboBox.SelectedIndex = 0;
+<#+
+							int index = 0;
+							foreach( MetadataClass derivedClass in Project.Metadata.BaseAndDerivedClasses( metadataClass ) )
+								if ( !(derivedClass is AbstractClass) )
+								{
+									++index;
+#>
+	<#=m.Name#>ComboBox.Items.Add(" <#=derivedClass.TypeName#>" );
+	if ( This.<#=m.Name#> != null && This.<#=m.Name#>.GetType() == typeof(<#=derivedClass.QualifiedTypeName#>) )
+		<#=m.Name#>ComboBox.SelectedIndex = <#= index #>;
+<#+
+								}
+#>		
+	dockPanel.Children.Add ( <#=m.Name#>ComboBox );
+	<#=m.Name#>ComboBox.SelectionChanged += <#=m.Name#>_SelectionChanged;
+	
+<#+
+						}
+#>
+	<#=m.Name#> = new GroupBox { Header = dockPanel };
+	if ( This.<#=m.Name#> != null )
+	{
+		<#=m.Name#>Layout = gui.Layouts.CreateLayoutFor< <#=value.Type.QualifiedTypeName#>Layout >( This.<#=m.Name#> );
+		<#= m.Name #>Layout.ParentLayout = this;
+		<#= m.Name #>Layout.ObjectChanged += <#=m.Name#>_Changed;
+
+<#+
+						if ( metadataClass.HasMinMax && value.MinMaxDefined )
+						{
+#>
+		<#=m.Name#>Layout.SetMinMax( new <#=value.Type.QualifiedTypeName#> { <#=value.Min#> }, new <#=value.Type.QualifiedTypeName#> { <#=value.Max#> } );
+<#+
+						}
+#>		
+		StackPanel panel = new StackPanel();
+		<#=m.Name#>Layout.CreateControls( This.<#=m.Name#>, panel.Children );
+		<#=m.Name#>.Content = panel;
+	}
+	collection.Add( <#=m.Name#> );	
+}
+
+<#+				
+					}
+				}
+				if ( m is Reference )
+				{
+#>
+{
+	DockPanel panel = new DockPanel();
+	<#=m.Name#> = new TextBox { IsReadOnly = true };
+	<#=m.Name#>Guid = new TextBox { IsReadOnly = true };
+	panel.Children.Add( new Label{ Content = "<#=m.Name#>" } );
+	Button button = new Button{ Content = "Browse..." };
+	button.Click += <#=m.Name#>_Clicked;
+	panel.Children.Add( button );
+	panel.Children.Add( <#=m.Name#> );
+	panel.Children.Add( <#=m.Name#>Guid );
+	collection.Add( panel );
+}
+<#+				
+					WriteLine("");
+				}
+			}
+			PopIndent();
+#>
+}
+
+public override void ObjectDataToControls()
+{
+	IsObjectDataToControls = true;
+<#+
+            if ( c.HasReferencesDeep || c is FolderClass || c is FileClass || c is ProjectClass )
+            {
+#>
+	TypeLabel.Content = "<#=c.TypeName#>";
+<#+
+            }
+			if ( c.IsReferenced || c is FolderClass || c is FileClass )
+			{
+#>
+	GuidLabel.Content = This.Guid.ToString();
+<#+
+			}
+#>
+	ObjectDataToControls_Base();
+	
+	IsObjectDataToControls = false;
+}
+protected override void ObjectDataToControls_Base()
+{
+	base.ObjectDataToControls_Base();
+<#+
+			foreach( Member m in c.Members )
+			{
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is Fundamental )
+					{
+						if ( value.Type is FundamentalBool )
+						{
+#>
+	<#=m.Name#>.IsChecked = This.<#=m.Name#>;
+<#+
+						}
+						else if ( value.Type is FundamentalInt )
+						{
+#>
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.Value = This.<#=m.Name#>;
+	<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+<#+
+						}
+						else if ( value.Type is FundamentalByte )
+						{
+#>
+	<#=m.Name#>.Value = This.<#=m.Name#>;
+	<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+<#+
+						}
+						else if ( value.Type is FundamentalFloat )
+						{
+#>
+	if ( <#=m.Name#> != null )
+		<#=m.Name#>.Value = This.<#=m.Name#>;
+	<#=m.Name#>_TextBox.Text = This.<#=m.Name#>.ToString();
+<#+
+						}
+						else if ( value.Type is FundamentalString )
+						{
+#>
+	<#=m.Name#>.Text = This.<#=m.Name#>;
+<#+
+						}
+						else
+							TextTransformation.Error( "Unknown metadata type: " + value.Type.QualifiedTypeName );
+					}
+					else if ( value.Type is Enumeration )
+					{
+						Enumeration enumeration = (Enumeration)value.Type;
+#>
+	switch ( This.<#=m.Name#> )
+	{
+<#+
+						foreach ( Enumerator enumerator in enumeration.Enumerators )
+						{
+#>
+	case <#= enumeration.QualifiedTypeName + "." + enumerator.Name #>:
+		<#=m.Name#>_<#=enumerator.Name#>.IsChecked = true;
+		break;
+<#+
+						}
+#>
+	} // switch
+<#+
+					}												
+					else if ( value.Type is MetadataClass && !value.IsGuiTreeNode )
+					{
+#>
+	if ( <#=m.Name#>Layout != null )
+		<#=m.Name#>Layout.ObjectDataToControls();
+<#+
+					}
+				}
+				if ( m is Reference )
+				{
+					Reference reference = (Reference)m;
+			        Member memberValueName = reference.Type.FindMemberDeep( member => member is ValueName );
+			        if ( memberValueName != null )
+			        {
+#>
+	<#=m.Name#>.Text = This.<#=m.Name#> == null ? "[null]" : This.<#=m.Name#>.<#=memberValueName.Name#>;
+<#+
+			        }
+                    else
+                    {
+#>
+	<#=m.Name#>.Text = This.<#=m.Name#> == null ? "[null]" : This.<#=m.Name#>.GetType().Name;
+<#+
+                    }
+#>
+	<#=m.Name#>Guid.Text = This.<#=m.Name#> == null ? "" : This.<#=m.Name#>.Guid.ToOptString();
+<#+
+				}
+			}
+#>
+}
+<#+
+			PopIndent();
+			WriteLine( "}" );
+			
+			if ( c.Namespace.Length > 0 )
+			{
+				PopIndent();
+				WriteLine( "} // namespace " + c.Namespace );
+			}
+			
+			WriteLine("");			
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <FundamentalBool Guid="c6eaab28-986d-4b09-8609-2a78636e3027" TypeName="bool" />
+    <FundamentalString Guid="814aa94e-ccce-4776-b55d-eed74be1e30e" TypeName="string" />
+    <FundamentalInt Guid="d7d192a5-881d-4a91-9bff-4ec1a57f3900" TypeName="int" />
+  </Types>
+</MetadataFileContent>

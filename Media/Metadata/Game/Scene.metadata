@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <MetadataClass Guid="a31ecf2f-653b-4595-8eed-c50c0d3cc116" TypeName="SceneObject">
+      <Members>
+        <ParentReference Guid="ab60af94-9cf8-4825-a1c9-77c35fe7b49a" Name="parent" Type="20df3bc1-db3d-443e-9cff-b4f14426f1be" />
+        <Value Guid="fae85196-efcd-4004-a660-afbbc4ccb7d9" Name="position" Type="112dfe1c-6c21-482d-8836-dd51a3b900d5" DefaultValue="x=1.0f, y=1.0f, z=1.0f" DefaultValueXml="x=1.0f, y=1.0f, z=1.0f" />
+        <Value Guid="1a72eee7-8cae-4d96-895c-5004ca2539b1" Name="scale" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" DefaultValue="1.0f" DefaultValueXml="1.0f" Min="0.1f" Max="100.0f" />
+        <Value Guid="ef540747-1aee-44f5-b67f-83b164495fe9" Name="color" Type="bfe3b0a7-c2d7-4511-ac3e-60145bb18632" DefaultValue="a=0, r=255, g=255, b=255" DefaultValueXml="a=0, r=255, g=255, b=255" />
+        <Value Guid="4d99ebcb-27de-4835-8317-be504f3959f7" Name="lod" Type="6447c198-e591-45b1-8560-60db1de3c6c6" DefaultValue="2" DefaultValueXml="2" Min="1" Max="3" />
+        <Value Guid="22df5858-12d4-4b51-86be-061df2d04dcc" Name="visible" Type="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" />
+        <Reference Guid="386ddb5c-8c5b-4724-ab45-620990bf5cca" Name="next" Type="a31ecf2f-653b-4595-8eed-c50c0d3cc116" />
+        <Value Guid="82d53064-cdaf-4689-92be-76bd5ce1baf8" Name="isSoundEnabled" Group="21e882d2-00e7-41c0-a223-328462516dd6" Type="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" />
+        <Value Guid="3fd380ef-b117-407a-b784-67101f443878" Name="isSfxEnabled" Group="653cb83a-f64c-4ef7-a054-036156a85525" Type="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" />
+        <FunctionUser Guid="c4b461bf-af49-4925-874f-68827e86e992" Name="TestFunction" Remote="Server" ExposeToLua="false">
+          <Result xsi:type="ArgumentValue" Name="res" Type="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" />
+          <Arguments>
+            <ArgumentValue Name="argInt" Type="6447c198-e591-45b1-8560-60db1de3c6c6" />
+            <ArgumentValue Name="argVec" Type="112dfe1c-6c21-482d-8836-dd51a3b900d5" />
+            <ArgumentReference Name="argRef" Type="76ca5dae-e0ec-486b-ad22-48ac05249b6d" />
+            <ArgumentValue Name="argEnum" Type="c3ddb205-a3e8-41e4-a1a9-f3ce809a67be" />
+            <ArgumentValue Name="argString" Type="aeaee131-89ba-484e-b879-9ca8067a7175" />
+            <ArgumentValue Name="argColor" Type="bfe3b0a7-c2d7-4511-ac3e-60145bb18632" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionUser Guid="6d1bdbcb-6541-4485-85ba-e531c5fd9a4c" Name="TestLua" ExposeToLua="true">
+          <Result xsi:type="ArgumentValue" Name="res" Type="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" />
+          <Arguments>
+            <ArgumentValue Name="argBool" Type="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" />
+            <ArgumentValue Name="argVec3" Type="112dfe1c-6c21-482d-8836-dd51a3b900d5" />
+            <ArgumentValue Name="argFloat" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" />
+            <ArgumentReference Name="argRef" Type="a31ecf2f-653b-4595-8eed-c50c0d3cc116" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionLuaCallCC Guid="d02c0264-fb6c-42a1-9fef-8924f71f122c" Name="TestLuaCC">
+          <Result xsi:type="ArgumentValue" Name="res" Type="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" />
+          <Arguments>
+            <ArgumentValue Name="argStr" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" />
+            <ArgumentValue Name="argByte" Type="4980cb9b-76a7-4b3f-b0eb-08a110f4dd9b" />
+          </Arguments>
+        </FunctionLuaCallCC>
+        <FunctionLua Guid="9bdb2933-1665-473e-bdbc-b994fdf01778" Name="LuaConstructor">
+          <Arguments />
+        </FunctionLua>
+        <FunctionLua Guid="f2012c64-e43e-4d48-aa03-e407ed6c20d0" Name="LuaDestructor">
+          <Arguments />
+        </FunctionLua>
+      </Members>
+    </MetadataClass>
+    <CollectionClass Guid="1ced8553-f8e8-428d-9a1f-8b95c40fc073" TypeName="SceneObjectsCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>a31ecf2f-653b-4595-8eed-c50c0d3cc116</ItemsClass>
+      <IsPolymorphic>true</IsPolymorphic>
+    </CollectionClass>
+    <MetadataClass Guid="55a7a7fc-de50-4460-855c-f5a6dd785408" TypeName="SceneMesh" BaseClass="a31ecf2f-653b-4595-8eed-c50c0d3cc116">
+      <Members>
+        <Value Guid="58afe797-43cf-4ae2-b3d1-2d05ef2a6508" Name="colorSnd" Group="21e882d2-00e7-41c0-a223-328462516dd6" Type="bfe3b0a7-c2d7-4511-ac3e-60145bb18632" />
+        <FunctionUser Guid="af593564-9f51-4793-b5c9-302a5733cd4f" Name="TestLuaDerived" ExposeToLua="true">
+          <Result xsi:type="ArgumentReference" Name="res" Type="45cb2111-a7ed-430c-9ae2-73653daad168" />
+          <Arguments>
+            <ArgumentValue Name="argInt" Type="6447c198-e591-45b1-8560-60db1de3c6c6" />
+          </Arguments>
+        </FunctionUser>
+        <FunctionLua Guid="fb2fc7e3-73da-44a4-accb-fdb6bc31e19b" Name="TestLuaCall">
+          <Result xsi:type="ArgumentReference" Name="myRes" Type="34eac4c0-54b1-472f-81df-fd6e10c57087" />
+          <Arguments>
+            <ArgumentValue Name="argVal" Type="d52e959b-5ebf-4a6e-a42a-d0c234de2bd9" />
+            <ArgumentReference Name="argRef" Type="55a7a7fc-de50-4460-855c-f5a6dd785408" />
+          </Arguments>
+        </FunctionLua>
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="45cb2111-a7ed-430c-9ae2-73653daad168" TypeName="SceneAnimMesh" BaseClass="55a7a7fc-de50-4460-855c-f5a6dd785408">
+      <Members>
+        <Value Guid="b940536c-4640-414a-b89f-fa8ea1bfab65" Name="positionSfx" Group="653cb83a-f64c-4ef7-a054-036156a85525" Type="112dfe1c-6c21-482d-8836-dd51a3b900d5" Min="x=1.0f, y=1.0f, z=1.0f" Max="x=2.0f, y=2.0f, z=2.0f" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="76ca5dae-e0ec-486b-ad22-48ac05249b6d" TypeName="SceneZoneTrigger" BaseClass="a31ecf2f-653b-4595-8eed-c50c0d3cc116">
+      <Members>
+        <ValueName Guid="14e3e158-5114-45c1-b590-ba801322dbb9" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" DefaultValue="&quot;Trigger&quot;" DefaultValueXml="&quot;Trigger&quot;" />
+        <Value Guid="bf587132-4030-4b95-9206-68bea3467071" Name="triggerType" Type="c3ddb205-a3e8-41e4-a1a9-f3ce809a67be" DefaultValue="Character" DefaultValueXml="Character" />
+        <Value Guid="fed64754-90c4-40c8-a900-c90f6989234b" Name="ctrl" Type="34eac4c0-54b1-472f-81df-fd6e10c57087" IsPolymorphic="true" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="20df3bc1-db3d-443e-9cff-b4f14426f1be" TypeName="Scene">
+      <Members>
+        <Value Guid="e62c2b4b-84f5-419b-9d6a-1f8935aae81d" Name="mainObject" Type="a31ecf2f-653b-4595-8eed-c50c0d3cc116" IsPolymorphic="true" />
+        <Collection Guid="bb1154d6-63fa-483e-a6fa-14f7549549f5" Name="objects" Type="1ced8553-f8e8-428d-9a1f-8b95c40fc073" />
+      </Members>
+    </MetadataClass>
+    <Enumeration Guid="c3ddb205-a3e8-41e4-a1a9-f3ce809a67be" TypeName="TriggerType">
+      <Enumerators>
+        <Enumerator Name="Projectile" IntegralValue="0" />
+        <Enumerator Name="Character" IntegralValue="1" />
+      </Enumerators>
+    </Enumeration>
+    <AbstractClass Guid="34eac4c0-54b1-472f-81df-fd6e10c57087" TypeName="Controller">
+      <Members>
+        <Value Guid="6131e5df-025c-4f4f-878c-278c3ddb4c02" Name="priority" Type="6447c198-e591-45b1-8560-60db1de3c6c6" DefaultValue="15" DefaultValueXml="15" Min="0" Max="30" />
+      </Members>
+    </AbstractClass>
+    <MetadataClass Guid="ba5451aa-f6a3-445c-b3a2-c6955ec61c03" TypeName="ControllerBox" BaseClass="34eac4c0-54b1-472f-81df-fd6e10c57087">
+      <Members>
+        <Value Guid="cf046c68-1382-47a2-b6b1-ed0657db99ee" Name="size" Type="112dfe1c-6c21-482d-8836-dd51a3b900d5" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="7ace5c93-0d37-41a0-bcc3-8ee7c34cacb3" TypeName="ControllerSphere" BaseClass="34eac4c0-54b1-472f-81df-fd6e10c57087">
+      <Members>
+        <Value Guid="4120edc6-849c-471a-ada8-42e7debb887d" Name="radius" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" DefaultValue="1.5f" DefaultValueXml="1.5f" Min="0.5f" Max="29.5f" />
+      </Members>
+    </MetadataClass>
+  </Types>
+</MetadataFileContent>

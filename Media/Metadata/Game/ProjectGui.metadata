@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <FolderClass Guid="4e5f2dd2-3b2b-4c44-8620-262be737f924" TypeName="Gui">
+      <Members>
+        <ValueName Guid="c98d505b-8cdf-4138-b78a-c242b861180d" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;Gui&quot;" DefaultValueXml="&quot;Gui&quot;" />
+        <Value Guid="ce028e20-7890-49dc-a991-a1ef29cdf910" Name="mainMenu" Type="97e2754c-a946-42d5-b961-517108e29fad" />
+        <Value Guid="23ec491f-43b3-4128-834d-8ead43e294ca" Name="game" Type="ad753820-7e98-4910-a473-03cf514b4276" />
+        <ParentReference Guid="6ef7a615-f89f-4d7b-9485-64b1855825ad" Name="parent" Type="56e8a41d-bf20-475f-aa07-0a512975f527" />
+      </Members>
+    </FolderClass>
+    <FolderStorageClass Guid="89151a41-bdf2-4047-ad2b-1cb5ca1da1f2" TypeName="GuiCommon" IsReferenced="false">
+      <Members>
+        <ValueName Guid="babd8503-cb53-417a-9de6-406313193f2c" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;Common&quot;" DefaultValueXml="&quot;Common&quot;" />
+        <Collection Guid="b0e3237a-56fc-4190-aa49-7b89fa9bc31b" Name="files" Type="fb8ededb-c8ae-4208-a6cf-4d31c5508cb6" />
+        <ParentReference Guid="a1543822-a955-4f35-96f4-956e713fbded" Name="parent" Type="4e5f2dd2-3b2b-4c44-8620-262be737f924" />
+      </Members>
+    </FolderStorageClass>
+    <FolderStorageClass Guid="97e2754c-a946-42d5-b961-517108e29fad" TypeName="GuiMainMenu" BaseClass="89151a41-bdf2-4047-ad2b-1cb5ca1da1f2" IsReferenced="false">
+      <Members />
+    </FolderStorageClass>
+    <FolderStorageClass Guid="ad753820-7e98-4910-a473-03cf514b4276" TypeName="GuiGame" BaseClass="89151a41-bdf2-4047-ad2b-1cb5ca1da1f2" IsReferenced="false">
+      <Members />
+    </FolderStorageClass>
+    <FileClass Guid="37a5ca1e-d8ce-4dbd-9f69-48af50cf494a" TypeName="GuiFile" IsReferenced="false" FileExtension="gui">
+      <Members>
+        <FileStorage Guid="5625d372-0afb-4361-8566-efe830187a8d" Name="mainWindow" Type="bedc8392-d554-4e40-bc12-61edd551989b" />
+        <ParentReference Guid="f8d10f70-4b40-46d9-b44b-c9818ced46fa" Name="parent" Type="89151a41-bdf2-4047-ad2b-1cb5ca1da1f2" />
+        <ValueName Guid="e078e0df-a369-4162-b00c-cb283743209a" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" IsXmlAttr="true" DefaultValue="&quot;File&quot;" DefaultValueXml="&quot;File&quot;" />
+      </Members>
+    </FileClass>
+    <CollectionClass Guid="fb8ededb-c8ae-4208-a6cf-4d31c5508cb6" TypeName="GuiFilesCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>37a5ca1e-d8ce-4dbd-9f69-48af50cf494a</ItemsClass>
+    </CollectionClass>
+  </Types>
+</MetadataFileContent>

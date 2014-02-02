@@ -1,0 +1,829 @@
+<#@ assembly name="System.Core.dll" #>
+<#
+	{
+		string cppOutputLua = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile );
+
+		LuaCoreHppFileGeneration reflectionCoreHppFileGeneration = new LuaCoreHppFileGeneration( this, project, cppOutputLua, cppReflectionNamespace );
+		reflectionCoreHppFileGeneration.Output.File = cppOutputLua + ".Lua.h";
+		reflectionCoreHppFileGeneration.Output.Project = cppOutputProject;
+		reflectionCoreHppFileGeneration.Render();
+		
+		LuaCoreCppFileGeneration reflectionCoreCppFileGeneration = new LuaCoreCppFileGeneration( this, project, cppOutputLua, cppReflectionNamespace );
+		reflectionCoreCppFileGeneration.Output.File = cppOutputLua + ".Lua.cpp";
+		reflectionCoreCppFileGeneration.Output.Project = cppOutputProject;
+		reflectionCoreCppFileGeneration.Render();
+	}
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		bool fileHasLuaBinding = false;
+		foreach( MetadataClass metadataClass in metadataFile.Content.Classes )
+			if ( HasLuaBinding( metadataClass ) )
+				fileHasLuaBinding = true;
+			
+		if ( fileHasLuaBinding )
+		{
+			HppLuaFileGeneration hppLuaFileGeneration = new HppLuaFileGeneration( this, project, cppReflectionNamespace, metadataFile );
+			hppLuaFileGeneration.Output.File = metadataFile.RelativeName + ".Lua.h";
+			hppLuaFileGeneration.Output.Project = cppOutputProject;
+			hppLuaFileGeneration.Render();
+			
+			CppLuaFileGeneration cppLuaFileGeneration = new CppLuaFileGeneration( this, project, cppReflectionNamespace, metadataFile );
+			cppLuaFileGeneration.Output.File = metadataFile.RelativeName + ".Lua.cpp";
+			cppLuaFileGeneration.Output.Project = cppOutputProject;
+			cppLuaFileGeneration.Render();
+		}
+	}
+#>
+<#+
+	static bool HasLuaBinding( MetadataClass metadataClass )
+	{
+		return metadataClass.Members.Find( m => m is FunctionUser && (m as FunctionUser).ExposeToLua ) != null
+			|| metadataClass.Members.Find( m => m is FunctionLua ) != null
+			|| metadataClass.Members.Find( m => m is FunctionLuaCallCC ) != null
+		;
+	}
+	static bool HasLuaBindingDeep( MetadataClass metadataClass )
+	{
+		return metadataClass.FindMemberDeep( m => m is FunctionUser && (m as FunctionUser).ExposeToLua ) != null
+			|| metadataClass.FindMemberDeep( m => m is FunctionLua ) != null
+			|| metadataClass.FindMemberDeep( m => m is FunctionLuaCallCC ) != null
+		;
+	}
+#>
+<#+
+public class LuaCoreHppFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppOutputLua;
+	protected string							CppReflectionNamespace;
+
+	public LuaCoreHppFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppOutputLua, string cppReflectionNamespace )
+	{
+		TextTransformation = textTransformation;
+		CppOutputLua = cppOutputLua;
+		CppReflectionNamespace = cppReflectionNamespace;
+		Project = project;
+	}
+
+	public override string TransformText()
+	{
+#>
+#ifndef <#=CppOutputLua#>_Lua_h
+#define <#=CppOutputLua#>_Lua_h
+
+#include "Core.h"
+
+namespace lua
+{
+	class Host;
+}
+
+namespace <#=Project.CoreNamespace#> {
+
+void LuaInit( lua::Host & host );
+void LuaDone( lua::Host & host );
+
+} // namespace <#=Project.CoreNamespace#>
+
+#endif // <#=CppOutputLua#>_Lua_h
+<#+		
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+<#+
+public class LuaCoreCppFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppOutputLua;
+	protected string							CppReflectionNamespace;
+	
+	public LuaCoreCppFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppOutputLua, string cppReflectionNamespace )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppOutputLua = cppOutputLua;
+		CppReflectionNamespace = cppReflectionNamespace;
+	}
+	
+	public override string TransformText()
+	{
+#>
+#include "<#=CppOutputLua#>.Lua.h"
+
+<#+
+		foreach( MetadataFile metadataFile in Project.Metadata.FilesRecursive )
+		{
+			foreach( MetadataClass metadataClass in metadataFile.Content.Classes )
+				if ( HasLuaBinding( metadataClass ) )
+				{
+#>
+#include "<#=metadataFile.RelativeName#>.Lua.h"
+<#+
+				}
+		}
+#>
+
+namespace <#=Project.CoreNamespace#> {
+
+struct LuaData
+{
+};
+
+static LuaData * gThis = NULL;
+
+void LuaInit( lua::Host & host )
+{
+	CORE_ASSERT( gThis == NULL );
+	gThis = CORE_NEW LuaData();
+	
+<#+
+		foreach( MetadataClass metadataClass in Project.Metadata.Classes )
+		{
+			if ( HasLuaBinding( metadataClass ) )
+			{
+#>
+	<#=metadataClass.QualifiedTypeNameCpp#>_Lua::LuaTypeTableCreate( host );
+<#+
+			}
+		}
+#>
+}
+
+void LuaDone( lua::Host & host )
+{
+	CORE_ASSERT( gThis );
+
+<#+
+		foreach( MetadataClass metadataClass in Project.Metadata.Classes )
+		{
+			if ( HasLuaBinding( metadataClass ) )
+			{
+#>
+	<#=metadataClass.QualifiedTypeNameCpp#>_Lua::LuaTypeTableDestroy( host );
+<#+
+			}
+		}
+#>
+	
+	CORE_DELETE gThis;
+	gThis = NULL;
+}
+
+} // namespace <#=Project.CoreNamespace#>
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+<#+
+public class HppLuaFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppReflectionNamespace;
+	protected metadata.MetadataFile				File;
+	
+	public HppLuaFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppReflectionNamespace, metadata.MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppReflectionNamespace = cppReflectionNamespace;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+#ifndef <#=File.RelativeName.Replace( @"\", "_" )#>_Lua_h
+#define <#=File.RelativeName.Replace( @"\", "_" )#>_Lua_h
+
+// AUTOGENERATED FILE. MODIFY IT AT YOUR OWN RISK.
+
+// forward declarations from other files
+
+struct lua_State;
+
+namespace lua
+{
+	class Table;
+	class Host;
+}
+
+// dependencies
+
+<#+
+		var DependsOnFiles = new System.Collections.Generic.HashSet < MetadataFile >();
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( metadataClass.BaseClass != null ) 
+			{
+				if( !File.Content.Types.Contains( metadataClass.BaseClass ) )
+					DependsOnFiles.Add( metadataClass.BaseClass.Parent.Parent );
+			}
+
+			foreach( Member m in metadataClass.Members )
+			{
+				metadata.Type valueType = null;
+				if ( m is Collection )
+					valueType = (m as Collection).Type;
+				if ( m is FileStorage )
+					valueType = (m as FileStorage).Type;
+				if ( m is Value )
+					valueType = (m as Value).Type;
+
+				if ( valueType != null && !File.Content.Types.Contains( valueType ) )
+					DependsOnFiles.Add( valueType.Parent.Parent );					
+			}
+		}
+		foreach( MetadataFile metadataFile in DependsOnFiles )
+		{
+#>
+#include "<#= File.RelativePathFor( metadataFile ) + metadataFile.Name #>.h"
+<#+
+		}
+		WriteLine("");
+#>
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			PushIndent("\t");
+			WriteLine( "" );
+		}
+#>
+// forward declarations
+
+<#+
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( metadataClass.Namespace.Length > 0 )
+				WriteLine( "namespace " + metadataClass.Namespace + "{" );
+#>
+class <#=metadataClass.TypeName#>;
+<#+
+			if ( metadataClass.Namespace.Length > 0 )
+				WriteLine( "}" );
+		}
+#>
+
+// lua classes
+
+<#+
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( ! HasLuaBinding( metadataClass ) )
+				continue;
+		
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + metadataClass.Namespace );
+				WriteLine( "{" );
+				WriteLine( "" );
+			}
+#>
+class <#=metadataClass.TypeName#>_Lua
+{
+public:
+	<#=metadataClass.TypeName#>_Lua();
+	~<#=metadataClass.TypeName#>_Lua();
+	
+	static void LuaTypeTableCreate( lua::Host & host );
+	static void LuaTypeTableDestroy( lua::Host & host );
+	
+	static int LuaLookup ( lua_State * L );
+	
+	void LuaTableCreate( lua::Host & host );
+	void LuaTableDestroy( lua::Host & host );
+<#+
+			foreach( Member member in metadataClass.Members )
+			{
+				if ( member is FunctionLua )
+				{
+					Function function = member as Function;
+					WriteLine( "\t" + function.DeclarationWithOptionalResultCpp + ";" );
+				}
+				if ( member is FunctionLuaCallCC )
+				{
+					Function function = member as Function;
+					WriteLine( "\t" + function.DeclarationWithoutResultCpp("bool") + ";" );
+				}
+			}
+			if ( metadataClass.BaseClass == null )
+			{
+#>
+
+	lua::Table &	LuaTable	() const;
+	lua::Table *	LuaTableGet	() const;
+	void			LuaTableSet	( lua::Table * pTable );	
+
+private:
+	lua::Table * pLuaTable;
+<#+
+			}
+#>
+};
+<#+
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "" );
+				WriteLine( "} // namespace " + metadataClass.Namespace );
+			}
+
+			WriteLine( "" );
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+#>
+
+#endif // <#=File.RelativeName.Replace( @"\", "_" )#>_Lua_h
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+<#+
+public class CppLuaFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected string							CppReflectionNamespace;
+	protected metadata.MetadataFile				File;
+	
+	public CppLuaFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, string cppReflectionNamespace, metadata.MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		CppReflectionNamespace = cppReflectionNamespace;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+
+// AUTOGENERATED FILE. MODIFY IT AT YOUR OWN RISK.
+
+#include "<#=File.RelativePathToProj#>CoreLua.h"
+
+#include "<#=File.Name#>.h"
+
+// depends on parent/reference files
+<#+
+		var DependsOnFiles = new System.Collections.Generic.HashSet < MetadataFile >();
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( metadataClass.BaseClass != null && !File.Content.Types.Contains( metadataClass.BaseClass ) )
+				DependsOnFiles.Add( metadataClass.BaseClass.Parent.Parent );
+				
+			foreach( Member m in metadataClass.Members )
+			{
+				MetadataClass valueClass = null;
+				if ( m is ParentReference )
+					valueClass = (m as ParentReference).Type;
+				if ( m is Reference )
+					valueClass = (m as Reference).Type;
+
+				if ( valueClass != null && !File.Content.Types.Contains( valueClass ) )
+					DependsOnFiles.Add( valueClass.Parent.Parent );					
+			}
+		}
+		foreach( MetadataFile metadataFile in DependsOnFiles )
+		{
+#>
+#include "<#= File.RelativePathFor( metadataFile ) + metadataFile.Name #>.h"
+<#+
+		}
+		WriteLine("");
+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine( "" );
+		}
+
+		foreach( MetadataClass metadataClass in File.Content.Classes )
+		{
+			if ( ! HasLuaBinding( metadataClass ) )
+				continue;
+
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + metadataClass.Namespace );
+				WriteLine( "{" );
+				WriteLine( "" );
+			}
+#>
+namespace Lua_<#=metadataClass.TypeName#>
+{
+	static lua::Table * gTypeLuaTable;
+	
+<#+
+			PushIndent("\t");
+			foreach ( Member member in metadataClass.Members )
+			{
+				if ( member is FunctionUser )
+				{
+					FunctionUser functionUser = member as FunctionUser;
+					if ( functionUser.ExposeToLua )
+					{
+#>
+static int <#=functionUser.Name#> ( lua_State * L )
+{
+	static const char FUNCTION_NAME[] = "Lua_<#=metadataClass.TypeName#>::<#=functionUser.Name#>";
+	
+	lua::State state ( L );
+	if ( state.NumArgs() != <#=functionUser.Arguments.Count+1#> )
+	{
+		string err = FUNCTION_NAME;	err = err + ", num args error, expected: <#=functionUser.Arguments.Count+1#>, got: " + lua::IntToStr( state.NumArgs() );
+		return state.FunctionError ( err );
+	}
+	
+	<#=metadataClass.TypeName#> * pThis = NULL;
+	if ( state.IsTable ( 1 ) )
+		pThis = core::polymorphic_cast < <#=metadataClass.TypeName#> * > ( state.GetTypedTableThis < core::DataObject * > ( 1 ) );
+	else if ( state.IsTypedUserdata < core::DataObject * > ( 1 ) )
+		pThis = core::polymorphic_cast < <#=metadataClass.TypeName#> * > ( state.GetTypedUserdata < core::DataObject * > ( 1 ) );
+	else { string err = FUNCTION_NAME; err = err + ", 'this' table or pointer expected as a first argument"; return state.FunctionError ( err ); }
+	
+<#+
+						int n = 2;
+						foreach( Argument argument in functionUser.Arguments )
+						{
+							if ( argument is ArgumentValue )
+							{
+								ArgumentValue argumentValue = argument as ArgumentValue;
+#>
+	<#=argumentValue.Type.QualifiedTypeNameCpp#> <#=argument.Name#>;
+	if ( state.Is <<#=argumentValue.Type.QualifiedTypeNameCpp#>> ( <#= n #> ) )	<#=argument.Name#> = state.Get <<#=argumentValue.Type.QualifiedTypeNameCpp#> > ( <#= n #> );
+	else { string err = FUNCTION_NAME; err = err + ", argument <#=argument.Name#>: <#=argumentValue.Type.QualifiedTypeNameCpp#> expected";	return state.FunctionError ( err );	}
+	
+<#+
+							}					
+							else if ( argument is ArgumentReference )
+							{
+								ArgumentReference argumentReference = argument as ArgumentReference;
+#>
+	<#=argumentReference.Type.QualifiedTypeNameCpp#> * <#=argument.Name#>;
+	if ( state.IsTable ( <#= n #> ) ) <#=argument.Name#> = core::polymorphic_cast < <#=metadataClass.TypeName#> * > ( state.GetTypedTableThis < core::DataObject * > ( <#= n #> ) );
+	else if ( state.IsTypedUserdata < core::DataObject * > ( <#= n #> ) ) <#=argument.Name#> = core::polymorphic_cast < <#=metadataClass.TypeName#> * > ( state.GetTypedUserdata < core::DataObject * > ( <#= n #> ) );
+	else { string err = FUNCTION_NAME;	err = err + ", argument <#=argument.Name#>: table or pointer expected";	return state.FunctionError ( err );	}
+	
+<#+
+							}
+							++n;
+						}
+
+						if ( functionUser.Result != null )
+						{	
+							if ( functionUser.Result is ArgumentValue )
+							{
+#>
+	<#=(functionUser.Result as ArgumentValue).Type.QualifiedTypeNameCpp#> <#=functionUser.Result.Name#> = <#+
+							}					
+							else if ( functionUser.Result is ArgumentReference )
+							{
+#>
+	<#=(functionUser.Result as ArgumentReference).Type.QualifiedTypeNameCpp#> * <#=functionUser.Result.Name#> = <#+
+							}					
+						}
+						else
+							Write("\t");
+
+#><#=functionUser.IsStatic ? metadataClass.QualifiedTypeNameCpp + "::" : "pThis->" #><#=functionUser.CallDeclarationCpp#>;
+	
+<#+
+						if ( functionUser.Result != null )
+						{
+							if ( functionUser.Result is ArgumentReference )
+							{
+								ArgumentReference resultReference = functionUser.Result as ArgumentReference;
+								if ( HasLuaBindingDeep( resultReference.Type ) )
+								{
+#>
+	if ( <#=resultReference.Name#> == NULL )
+		state.PushTypedUserdata< core::DataObject * >( <#=resultReference.Name#> );
+	else if ( <#=resultReference.Name#>->LuaTableGet() )
+		state.PushTable( <#=resultReference.Name#>->LuaTable() );
+<#+
+								}
+								else
+								{
+#>
+	state.PushTypedUserdata< core::DataObject * >( <#=resultReference.Name#> );
+<#+
+								}
+							}
+							else
+							{
+#>
+	state.Push( <#=functionUser.Result.Name#> );
+<#+
+							}
+						
+#>
+	return 1;
+<#+
+						}
+						else
+						{
+#>
+	return 0;
+<#+
+						}
+#>
+}
+<#+
+					}
+				}
+			}
+			PopIndent();
+#>			
+} // namespace Lua_<#=metadataClass.TypeName#>
+
+void <#=metadataClass.TypeName#>_Lua::LuaTypeTableCreate( lua::Host & host )
+{
+	CORE_ASSERT( Lua_<#=metadataClass.TypeName#>::gTypeLuaTable == NULL );
+	
+	lua::Table & table = host.TableConstruct();
+<#+ 
+			foreach ( Member member in metadataClass.Members )
+			{
+				if ( member is FunctionUser )
+				{
+					FunctionUser functionUser = member as FunctionUser;
+					if ( functionUser.ExposeToLua )
+					{
+#>
+	table.SetFunction ( "<#=functionUser.Name#>", Lua_<#=metadataClass.TypeName#>::<#=functionUser.Name#> );
+<#+
+					}
+				}
+			}
+#>
+
+	Lua_<#=metadataClass.TypeName#>::gTypeLuaTable = &table;
+}
+
+void <#=metadataClass.TypeName#>_Lua::LuaTypeTableDestroy( lua::Host & host )
+{
+	CORE_ASSERT( Lua_<#=metadataClass.TypeName#>::gTypeLuaTable );
+	host.TableDestruct ( *Lua_<#=metadataClass.TypeName#>::gTypeLuaTable );
+	Lua_<#=metadataClass.TypeName#>::gTypeLuaTable = NULL;	
+}
+
+int <#=metadataClass.TypeName#>_Lua::LuaLookup ( lua_State * L ) // args: [1] - table, [2] - key
+{
+	lua::State state ( L );
+			
+	CORE_ASSERT( Lua_<#=metadataClass.TypeName#>::gTypeLuaTable );
+	Lua_<#=metadataClass.TypeName#>::gTypeLuaTable->PushValueAt( state, 2 );
+	
+	if ( state.IsCFunction( -1 ) )
+		return 1;
+
+	state.PopArgs( 1 );		
+<#+
+			if ( metadataClass.BaseClass != null && HasLuaBinding( metadataClass.BaseClass ) )
+			{
+#>
+	return <#=metadataClass.BaseClass.QualifiedTypeNameCpp#>_Lua::LuaLookup( L );
+<#+
+			}
+			else
+			{
+#>
+	return 0;
+<#+
+			}
+#>
+}
+
+<#=metadataClass.TypeName#>_Lua::<#=metadataClass.TypeName#>_Lua()
+{
+<#+
+			if ( metadataClass.BaseClass == null )
+			{
+#>
+	pLuaTable = NULL;
+<#+
+			}
+#>
+}
+
+<#=metadataClass.TypeName#>_Lua::~<#=metadataClass.TypeName#>_Lua()
+{
+<#+
+			if ( metadataClass.BaseClass == null )
+			{
+#>
+	CORE_ASSERT( pLuaTable == NULL );
+<#+
+			}
+#>
+}
+
+<#+
+			if ( metadataClass.BaseClass == null )
+			{
+#>
+lua::Table & <#=metadataClass.TypeName#>_Lua::LuaTable() const
+{
+	CORE_ASSERT( pLuaTable );
+	return *pLuaTable;
+}
+
+lua::Table * <#=metadataClass.TypeName#>_Lua::LuaTableGet() const
+{
+	return pLuaTable;
+}
+
+void <#=metadataClass.TypeName#>_Lua::LuaTableSet( lua::Table * pTable )
+{
+	pLuaTable = pTable;
+}
+<#+
+			}
+#>
+
+void <#=metadataClass.TypeName#>_Lua::LuaTableCreate( lua::Host & host )
+{
+	<#=metadataClass.TypeName#> * pThis = static_cast < <#=metadataClass.TypeName#> * > ( this );
+	
+	lua::Table & table = host.TableConstruct();
+	pThis->LuaTableSet( &table );	
+	
+	table.SetThis( static_cast < core::DataObject * > ( pThis ) );
+	table.SetMetatableIndex( LuaLookup );
+}
+
+void <#=metadataClass.TypeName#>_Lua::LuaTableDestroy( lua::Host & host )
+{
+	<#=metadataClass.TypeName#> * pThis = static_cast < <#=metadataClass.TypeName#> * > ( this );
+	
+	lua::Table & table = pThis->LuaTable();
+	
+	table.ResetMetatable();
+	table.ResetThis();
+	
+	pThis->LuaTableSet( NULL );
+	host.TableDestruct( table );
+}
+
+<#+
+			foreach( Member member in metadataClass.Members )
+			{
+				if ( member is FunctionLua )
+				{
+					FunctionLua function = member as FunctionLua;
+#>
+<#=function.DeclarationWithOptionalResultFullCpp(metadataClass.TypeName+"_Lua")#>
+{
+	<#=metadataClass.TypeName#> * pThis = static_cast < <#=metadataClass.TypeName#> * > ( this );
+
+	lua::State & state = pThis->LuaTable().m_Host;
+
+	if ( pThis->LuaTable().PushFunction( "<#=function.Name#>" ) )
+	{
+<#+
+					foreach( Argument argument in function.Arguments )
+					{
+						if ( argument is ArgumentReference )
+						{
+							ArgumentReference argumentReference = argument as ArgumentReference;
+							if ( HasLuaBindingDeep( argumentReference.Type ) )
+							{
+#>
+		if ( <#=argument.Name#> == NULL )
+			state.PushTypedUserdata< core::DataObject * >( <#=argument.Name#> );
+		else if ( <#=argument.Name#>->LuaTableGet() )
+			state.PushTable( <#=argument.Name#>->LuaTable() );
+<#+
+							}
+							else
+							{
+#>
+		state.PushTypedUserdata< core::DataObject * >( <#=argument.Name#> );
+<#+
+							}
+						}
+						else
+						{
+#>
+		state.Push( <#=argument.Name#> );
+<#+
+						}
+					}
+#>
+		if ( state.FunctionCall( <#=function.Arguments.Count#>, <#=function.Result==null ? "0" : "1"#> ) )
+		{
+<#+
+					if ( function.Result != null )
+					{
+#>
+			<#=function.Result.QualifiedTypeCpp#> <#=function.Result.Name#>;
+<#+
+						if ( function.Result is ArgumentReference )
+						{
+#>
+			if ( state.IsTable ( -1 ) )
+			{
+				<#=function.Result.Name#> = core::polymorphic_cast < <#=function.Result.QualifiedTypeCpp#> > ( state.GetTypedTableThis < core::DataObject * > ( -1 ) );
+				return core::Optional< <#=function.Result.QualifiedTypeCpp#> >( <#=function.Result.Name#> );
+			}
+			else if ( state.IsTypedUserdata < core::DataObject * > ( -1 ) )
+			{
+				<#=function.Result.Name#> = core::polymorphic_cast < <#=function.Result.QualifiedTypeCpp#> > ( state.GetTypedUserdata < core::DataObject * > ( -1 ) );
+				return core::Optional< <#=function.Result.QualifiedTypeCpp#> >( <#=function.Result.Name#> );
+			}
+<#+
+						}
+						else
+						{
+#>
+			if ( state.Is < <#=function.Result.QualifiedTypeCpp#> >( -1 ) )
+			{
+				<#=function.Result.Name#> = state.Get < <#=function.Result.QualifiedTypeCpp#> >( -1 );
+				state.FunctionPopResults( 1 );
+				return core::Optional< <#=function.Result.QualifiedTypeCpp#> >( <#=function.Result.Name#> );
+			}
+<#+
+						}
+					}
+					else
+					{
+#>
+			return true;
+<#+
+					}
+#>
+		}
+	}
+	return <#=function.Result != null ? "core::Optional<" + function.Result.QualifiedTypeCpp + ">()" : "false"#>;
+}
+
+<#+
+				}
+				if ( member is FunctionLuaCallCC )
+				{
+					FunctionLuaCallCC function = member as FunctionLuaCallCC;
+#>
+<#=function.DeclarationWithoutResultFullCpp(metadataClass.TypeName+"_Lua","bool")#>
+{
+	<#=metadataClass.TypeName#> * pThis = static_cast < <#=metadataClass.TypeName#> * > ( this );
+
+	lua::Call * pCallCc = CORE_NEW lua::Call ( pThis->LuaTable().m_Host );
+
+	bool result = false;
+	if ( pThis->LuaTable().PushFunction( pCallCc->m_Thread, "<#=function.Name#>" ) )
+	{
+		int nResults;
+		lua::WorkResult::Enum workResult = pCallCc->FunctionCall( *pThis, <#=function.Arguments.Count#>, nResults );
+		switch( workResult )
+		{
+		case lua::WorkResult::YIELD:
+			result = true;
+			break;
+		case lua::WorkResult::RETURN:
+			break;
+		case lua::WorkResult::ERR:
+			break;
+		}
+	}
+	return result;
+}
+
+<#+
+				}
+			}
+#>
+<#+
+			if ( metadataClass.Namespace.Length > 0 )
+			{
+				WriteLine( "" );
+				WriteLine( "} // namespace " + metadataClass.Namespace );
+			}
+
+			WriteLine( "" );
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceEnd );
+		}
+		
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

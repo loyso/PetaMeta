@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <MetadataClass Guid="bedc8392-d554-4e40-bc12-61edd551989b" TypeName="Window">
+      <Members>
+        <Collection Guid="5a18866f-dc00-45d2-bb19-93a439ef7f69" Name="children" Type="5fd8d70c-81ba-4d60-84b6-aac42e82e833" />
+        <Value Guid="572d08c8-4252-4f9c-bb06-54da38eca3ff" Name="position" Type="d52e959b-5ebf-4a6e-a42a-d0c234de2bd9" />
+        <Value Guid="9d4f73b8-e0b6-40ef-9107-0d6740362974" Name="size" Type="d52e959b-5ebf-4a6e-a42a-d0c234de2bd9" />
+        <ParentReference Guid="1dc51fd9-fe34-4022-9a99-2b19146092c0" Name="parent" Type="bedc8392-d554-4e40-bc12-61edd551989b" />
+        <ParentReference Guid="7f1de85d-3e95-4c5c-96f1-2565c5c5576e" Name="parentFile" Type="37a5ca1e-d8ce-4dbd-9f69-48af50cf494a" />
+        <ValueName Guid="161ae0ba-f877-4d73-9ccb-269ca75b731e" Name="name" Type="aeaee131-89ba-484e-b879-9ca8067a7175" DefaultValue="&quot;Window&quot;" DefaultValueXml="&quot;Window&quot;" />
+      </Members>
+    </MetadataClass>
+    <CollectionClass Guid="5fd8d70c-81ba-4d60-84b6-aac42e82e833" TypeName="WindowsCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>bedc8392-d554-4e40-bc12-61edd551989b</ItemsClass>
+      <IsPolymorphic>true</IsPolymorphic>
+    </CollectionClass>
+  </Types>
+</MetadataFileContent>

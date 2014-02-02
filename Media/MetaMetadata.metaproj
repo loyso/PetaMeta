@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" CoreNamespace="metadata">
+  <Metadata Guid="377517d1-176c-42ff-b18f-6738b7c8b967" Name="MetaMetadata" Namespace="metadata">
+    <Folders />
+    <Files>
+      <MetadataFile Guid="1f9962e3-9cd9-4e5a-af61-852f467b01bf" Name="MetaFundamental" />
+      <MetadataFile Guid="7a4c0ac6-51fe-4aa4-94fd-62abb8200a5a" Name="MetaPrimitives" />
+      <MetadataFile Guid="045c217d-0753-41bd-8ed3-6356e9a163de" Name="MetaClasses" />
+      <MetadataFile Guid="21358560-9961-4bb2-8992-e618fe1a742e" Name="MetaProject" />
+      <MetadataFile Guid="25fa4658-9fec-445b-aae3-ed8630e950a3" Name="MetaFunction" />
+    </Files>
+  </Metadata>
+  <MemberGroups />
+</MetadataProject>

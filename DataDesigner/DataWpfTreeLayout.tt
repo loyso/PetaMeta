@@ -1,0 +1,15 @@
+﻿<#@ template hostspecific="True"#>
+<#@ assembly name="$(SolutionDir)Bin\Debug\Metadata.dll" #>
+<#@ import namespace="metadata" #>
+<#@ include file="T4ToolBox.tt" #>
+<#@ output extension=".log" #>
+<#
+	MetadataProject project = null;
+	project = project.ProjectLoad( Host.ResolvePath(@"..\Media\Game" + project.ProjectExtension() ) );
+	project.Load();
+	
+	const string csOutputProject = @"DataDesigner.csproj";
+	const string csReflectionMetadataNamespace = "reflection";
+#>
+<#@ include file="..\Transformations\Cs\GenerateCsWpfLayout.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsWpfTree.tt" #>

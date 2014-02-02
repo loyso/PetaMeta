@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Guid="ca9cefbc-5a31-4b57-9c23-b3f14baea6be">
+  <children>
+    <Window Guid="9e132448-a046-48d0-a719-d99f24a2640f">
+      <children />
+      <position x="0" y="0" />
+      <size x="10" y="0.4411915" />
+      <name>Header</name>
+    </Window>
+  </children>
+  <position x="0" y="0" />
+  <size x="10" y="10" />
+  <name>Main</name>
+</Window>

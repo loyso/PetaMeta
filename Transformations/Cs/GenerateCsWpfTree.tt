@@ -1,0 +1,901 @@
+﻿<#
+	{
+		CsWpfTreeCore core = new CsWpfTreeCore( project, csReflectionMetadataNamespace );
+		core.Output.File = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile ) + ".Tree.cs";
+		core.Output.Project = csOutputProject;
+		core.Render();
+	}
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		if ( metadataFile.GenerateGui && metadataFile.Content.Classes.GetEnumerator().MoveNext() )
+		{	
+			CsWpfTree file = new CsWpfTree( project, csReflectionMetadataNamespace, metadataFile );
+			file.Output.File = metadataFile.RelativeName + ".Tree.cs";
+			file.Output.Project = csOutputProject;
+			file.Render();
+		}
+	}
+#>
+<#+
+public class CsWpfTreeCore : Template
+{
+	protected MetadataProject	Project;
+	protected string			CsReflectionMetadataNamespace;
+	
+	public CsWpfTreeCore( MetadataProject project, string csReflectionMetadataNamespace )
+	{
+		Project = project;
+		CsReflectionMetadataNamespace = csReflectionMetadataNamespace;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace tree
+{
+	public partial class Tree
+	{
+	    public TreeView         TreeView;
+	    public TreeObject       TreeObject;
+	    public readonly bool    ShowFileStorage;
+	    public readonly Predicate< core.DataObject >	Predicate;
+	    public readonly	core.IFolderStorageObject		FolderStorage;
+	    private Dictionary< core.DataObject, TreeObject > DataToTree = new Dictionary< core.DataObject, TreeObject >();     
+	    
+	    public Tree( bool showFileStorage, core.IFolderStorageObject folderStorage, Predicate< core.DataObject > predicate )
+	    {
+	        ShowFileStorage = showFileStorage;
+	        FolderStorage = folderStorage;
+	        Predicate = predicate;
+	    }
+	    
+	    public void CreateTreeView( core.DataObject dataObject, string label )
+	    {
+			TreeObject = Trees.CreateTreeObjectFor <TreeObject>( dataObject );
+			TreeObject.CreateTree_Label( dataObject, label, this );
+			TreeObject.ObjectDataToControls();
+			TreeObject.TreeViewItem.IsExpanded = true;
+			
+			TreeView = new TreeView { AllowDrop = true };
+			TreeView.AddHandler( TreeView.MouseDownEvent, new RoutedEventHandler(this.MouseDown), true);
+			TreeView.MouseMove += MouseMove;
+			TreeView.DragOver += DragOver;
+			TreeView.Drop += Drop;
+			TreeView.Items.Add( TreeObject.TreeViewItem );    
+	    }
+	    
+	    public void RegisterDataToTree( core.DataObject dataObject, TreeObject treeObject )
+	    {
+	        DataToTree.Add( dataObject, treeObject );
+	    }
+	    public void UnregisterDataToTree( core.DataObject dataObject )
+	    {
+	        DataToTree.Remove( dataObject );
+	    }
+	    public TreeObject FindDataToTree( core.DataObject dataObject )
+	    {
+	        TreeObject treeObject = null;
+	        if ( !DataToTree.TryGetValue( dataObject, out treeObject ) )
+    			return null;
+	        return treeObject;
+	    }
+	    
+	    // DRAG AND DROP
+	    
+		private Point MouseDownPoint = new Point(0, 0); 
+		private TreeViewItem DragTreeViewItem = null;		
+
+		private void MouseDown(object source, RoutedEventArgs args)
+		{
+			System.Windows.Input.MouseEventArgs e = (System.Windows.Input.MouseEventArgs)args;			
+			TreeObject treeObject = ((FrameworkElement)e.Source).DataContext as TreeObject;
+			if ( treeObject != null )
+			{			
+				MouseDownPoint = e.GetPosition(null); 
+				DragTreeViewItem = treeObject.TreeViewItem;
+			}
+			else
+				DragTreeViewItem = null;
+		}
+		void MouseMove(object sender, System.Windows.Input.MouseEventArgs e) 
+		{ 
+			if( DragTreeViewItem != null ) 
+			{ 
+				if ( e.LeftButton == System.Windows.Input.MouseButtonState.Pressed )
+				{
+					Point position = e.GetPosition(null); 
+					if (Math.Abs(position.X - MouseDownPoint.X) > SystemParameters.MinimumHorizontalDragDistance 
+						|| Math.Abs(position.Y - MouseDownPoint.Y) > SystemParameters.MinimumVerticalDragDistance) 
+					{ 
+						DragDrop.DoDragDrop( TreeView, DragTreeViewItem, DragDropEffects.Move );
+						DragTreeViewItem = null;
+					}
+				}
+				else
+					DragTreeViewItem = null;
+			}
+		}
+		void DragOver( Object sender, DragEventArgs e )
+		{
+			if( e.Data.GetDataPresent( typeof(TreeViewItem) ) ) 
+			{
+				TreeViewItem treeViewItem = (TreeViewItem)e.Data.GetData( typeof(TreeViewItem) );
+				tree.TreeObject treeObject = treeViewItem.DataContext as tree.TreeObject;
+				e.Effects = DragDropEffects.Move;
+			}
+			else
+			{
+				e.Effects = DragDropEffects.None;
+			}		
+		}
+		void Drop( Object sender, DragEventArgs e )
+		{
+			if( e.Data.GetDataPresent( typeof(TreeViewItem) ) ) 
+			{
+				TreeViewItem sourceItem = (TreeViewItem)e.Data.GetData( typeof(TreeViewItem) );
+
+				TreeObject source = sourceItem.DataContext as TreeObject;
+				TreeObject target = (e.OriginalSource as FrameworkElement).DataContext as TreeObject;
+				if ( target != null && source.TreeViewItem.Parent is TreeViewItem )
+				{
+					TreeViewItem sourceItemParent = (TreeViewItem)source.TreeViewItem.Parent;								
+					ITreeCollection sourceCollection = sourceItemParent.DataContext as ITreeCollection;							
+
+					TreeViewItem targetItemParent = null;
+					ITreeCollection targetCollection = null;
+					
+					if ( target is ITreeCollection )
+					{
+						targetCollection = target as ITreeCollection;
+						target = null;
+					}
+					else
+					{
+						targetItemParent = target.TreeViewItem.Parent as TreeViewItem;
+						if ( targetItemParent != null )
+							targetCollection = targetItemParent.DataContext as ITreeCollection;				
+					}
+					
+					if ( targetCollection != null && targetCollection.CanContain( source ) )
+					{
+						sourceCollection.Remove( source );				
+						targetCollection.AddAfter( target, source );
+						
+						sourceItem.IsSelected = true;					
+					}
+				}
+			}
+			
+			e.Handled = true;			
+		}		
+	}
+
+	public abstract class ITreeObject
+	{
+		protected virtual void NewObject( core.DataObject newDataObject ) {} 
+		protected virtual void DeleteObject( core.DataObject newDataObject ) {} 
+		
+		protected virtual void Selected() {}
+		protected virtual void Unselected() {}
+
+		protected virtual void MouseDoubleClicked() {}	
+		
+		protected virtual BitmapImage TreeImage()
+		{
+			return null;
+		}
+<#+
+		if ( CsReflectionMetadataNamespace.Length > 0 )
+		{
+#>		
+		protected virtual void MemberChanged_Value( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.Value member, core.DataObject dataValue ) {}
+		protected virtual void MemberChanged_Reference( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.Reference member, core.ReferenceObject referenceValue ) {}
+		protected virtual void MemberChanged_ParentReference( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.ParentReference member, core.ReferenceObject referenceValue ) {}
+		protected virtual void MemberChanged_FileStorage( <#=CsReflectionMetadataNamespace#>.MetadataClass ThisMetadataClass, core.ReferenceObject This, <#=CsReflectionMetadataNamespace#>.FileStorage member, core.ReferenceObject referenceValue ) {}
+<#+
+		}
+#>	}
+	
+	public partial class TreeObject : ITreeObject
+	{
+	    public Tree RootTree;
+		public core.DataObject This;
+		public TreeViewItem	TreeViewItem;
+		public TextBlock NameTextBlock;
+		
+		public virtual void	CreateTree( core.DataObject dataObject, Tree rootTree ) 
+		{
+		}
+		public virtual void	CreateTree_Label( core.DataObject dataObject, string textLabel, tree.Tree rootTree ) 
+		{
+		}
+		protected virtual void CreateTree_Base( core.DataObject dataObject, Tree rootTree ) 
+		{
+		    RootTree = rootTree;
+			This = dataObject;
+		    RootTree.RegisterDataToTree( This, this );
+		}	
+
+		public virtual void	DestroyTree() 
+		{
+		}
+		protected virtual void DestroyTree_Base() 
+		{
+		    RootTree.UnregisterDataToTree( This );
+		}
+		
+		public virtual void		ObjectDataToControls() {}
+		protected virtual void	ObjectDataToControls_Base() {}
+		
+		public virtual core.IFolderStorageObject ParentFolderStorage()
+		{
+			return null;
+		}		
+	}
+	
+	public interface ITreeCollection
+	{
+		bool CanContain		( TreeObject treeObject );
+		void Add			( TreeObject treeObject );
+		void AddAfter		( TreeObject treeObjectAfter, TreeObject treeObject );
+		void Remove			( TreeObject treeObject );
+	}
+	
+	public abstract class TreeCollectionOf<T> : TreeObject, IEnumerable<T> where T : TreeObject
+	{
+		private List<T> Values = new List<T>();
+
+		public IEnumerator<T> GetEnumerator()
+		{
+			return Values.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+	    
+		public void Add( T item )
+		{
+			Values.Add( item );
+		}
+	    
+        public void Insert( int index, T item )
+        {
+			Values.Insert( index, item );
+        }
+        
+        public int IndexOf( T item )
+        {
+			return Values.IndexOf( item );
+        }
+	    
+	    public void Remove( T item )
+	    {
+			Values.Remove( item );
+	    }
+	    
+		public void Clear()
+		{
+			Values.Clear();
+		}
+	    
+		public T Find( Predicate<T> match )
+		{
+			return Values.Find( match );
+		}			
+	}
+	
+	public static class Trees
+	{
+		delegate TreeObject DelegateCreateTree();
+	
+		private static Dictionary<System.Type,DelegateCreateTree> DataTypeToTreeType = new Dictionary<System.Type,DelegateCreateTree>();	
+	
+		static Trees()
+		{
+<#+
+		PushIndent("\t\t\t");
+		foreach( MetadataClass c in Project.Metadata.Classes )
+			if ( !(c is AbstractClass ) )
+				WriteLine( "DataTypeToTreeType.Add( typeof(" + c.QualifiedTypeName + "), () => { return new " + c.QualifiedTypeName + "Tree(); } );" );
+		PopIndent();
+#>	
+		}
+	
+		public static T CreateTreeObjectFor < T >( core.DataObject obj ) where T : TreeObject
+		{
+			DelegateCreateTree delegateCreateTree;
+			if ( DataTypeToTreeType.TryGetValue( obj.GetType(), out delegateCreateTree ) )
+			{
+				TreeObject treeObject = delegateCreateTree();				
+				T typedObject = treeObject as T;
+				if ( typedObject == null )
+					throw new core.TypeMappingException( obj.GetType() );
+				return typedObject;
+			}
+			return null;			
+		}	
+	}
+	
+	public partial class BrowseDialog : Window
+	{
+        public Tree RootTree;
+		public core.DataObject Reference;
+
+		public BrowseDialog( core.IFolderStorageObject folderStorage, Predicate<core.DataObject> predicate )
+		{
+			WindowStyle = WindowStyle.ToolWindow;
+			RootTree = new Tree( true, folderStorage, predicate );
+		}
+
+		public bool ModalDialog( core.DataObject exploreObject, string exploreObjectName, System.Type referenceType, core.DataObject currentReference )
+		{
+			RootTree.CreateTreeView( exploreObject, exploreObjectName );
+
+			if ( currentReference != null )
+			{
+				TreeObject treeObject = RootTree.FindDataToTree( currentReference );
+				if ( treeObject != null )
+				{				
+					TreeViewItem treeViewItem = treeObject.TreeViewItem;
+					treeViewItem.IsSelected = true;
+					while ( treeViewItem != null )
+					{
+						treeViewItem.IsExpanded = true;
+						treeViewItem = treeViewItem.Parent as TreeViewItem;
+					}
+				}
+			}
+
+			bool result = false;
+			Reference = null;
+
+			DockPanel dockPanel = new DockPanel();
+			dockPanel.LastChildFill = true;
+
+			DockPanel buttons = new DockPanel();
+
+			Button buttonOk = new Button{ Content = "Ok", Width = 64 };
+			buttonOk.Click += ( s, e ) =>
+			{
+				TreeViewItem treeViewItem = (TreeViewItem)RootTree.TreeView.SelectedItem;
+				tree.TreeObject treeObject = treeViewItem.DataContext as tree.TreeObject;		
+				if ( treeObject != null && referenceType.IsInstanceOfType( treeObject.This ) )
+				{
+					Reference = treeObject.This;
+					result = true;	
+					Close();
+				}				
+			};
+			
+			Button buttonCancel = new Button{ Content = "Cancel", Width = 64 };
+			buttonCancel.Click += ( s, e ) =>
+			{
+				result = false; // cancel
+				Close();
+			};
+
+			Button buttonNull = new Button{ Content = "Null", Width = 64 };
+			buttonNull.Click += ( s, e ) =>
+			{
+				Reference = null;
+				result = true;	
+				Close();
+			};
+
+			buttons.Children.Add( buttonOk );
+			buttons.Children.Add( buttonCancel );
+			buttons.Children.Add( buttonNull );
+			
+			DockPanel.SetDock(buttons, Dock.Bottom);
+			
+			dockPanel.Children.Add( buttons );
+			dockPanel.Children.Add( RootTree.TreeView );
+			
+			Content = dockPanel;
+
+			ShowDialog();
+
+			return result;
+		}
+	}
+} // tree
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+} // CsWpfTreeCore
+#>
+<#+
+public class CsWpfTree : Template
+{
+	protected MetadataProject	Project;
+	protected string			CsReflectionMetadataNamespace;
+	protected MetadataFile		File;
+	
+	public CsWpfTree( MetadataProject project, string csReflectionMetadataNamespace, MetadataFile file )
+	{
+		Project = project;
+		CsReflectionMetadataNamespace = csReflectionMetadataNamespace;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections.Generic;
+using System.Windows;
+
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
+using System.Windows.Input;
+
+using tree;
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine("");
+			PushIndent("\t");
+		}
+
+		foreach( MetadataClass c in File.Content.Classes )
+		{
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + c.Namespace );
+				WriteLine( "{" );
+				PushIndent("\t");
+			}
+			
+			string baseDeclaration = "tree.TreeObject";
+			string interfaceDeclaration = "";
+			
+			if ( c is CollectionClass )
+			{
+				baseDeclaration = "tree.TreeCollectionOf < " + ( c as CollectionClass ).ItemsClass.QualifiedTypeName + "Tree >";
+				interfaceDeclaration = ", ITreeCollection";
+			}
+			
+			if ( c.BaseClass != null )
+				baseDeclaration = c.BaseClass.TypeName + "Tree";
+
+			string classModifiers = "public";
+			if ( c is AbstractClass )
+				classModifiers += " abstract";
+			classModifiers += " partial";					
+						
+			WriteLine( classModifiers + " class " + c.TypeName + "Tree : " + baseDeclaration + interfaceDeclaration );
+			WriteLine( "{" );
+			PushIndent("\t");
+#>
+public new <#=c.QualifiedTypeName#> This;
+
+<#+
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = m as Collection;
+					CollectionClass collectionClass = collection.Type as CollectionClass;
+#>
+
+private <#= collectionClass.QualifiedTypeName + "Tree" #> <#= collection.Name #> = new <#= collectionClass.QualifiedTypeName + "Tree" #>();
+<#+
+				}
+				if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+private <#= fileStorage.Type.QualifiedTypeName + "Tree" #> <#= fileStorage.Name #>;
+<#+
+				}
+				if ( m is ParentReference )
+				{
+					ParentReference parentReference = (ParentReference)m;
+#>
+public <#= parentReference.Type.QualifiedTypeName + "Tree" #> <#= parentReference.Name #>;
+<#+
+				}				
+				if ( m is Value )
+				{
+					Value value = m as Value;
+					if ( value.IsGuiTreeNode )
+					{
+#>
+private <#= value.Type.QualifiedTypeName + "Tree" #> <#= value.Name #>;
+<#+
+					}
+				}
+			}
+#>
+public override void CreateTree( core.DataObject obj, tree.Tree rootTree )
+{
+	This = (<#=c.QualifiedTypeName#>)obj;
+<#+
+		PushIndent("\t");	
+		{
+			Member valueName = c.FindMemberDeep( m => m is ValueName );
+			if ( valueName != null )
+				WriteLine( "string textLabel = This." + valueName.Name + ";" );
+			else
+			{
+				if ( c is ProjectClass )
+					WriteLine("string textLabel = This.ProjectName;");
+				else
+					WriteLine("string textLabel = \"" + c.TypeName + "\";");
+			}
+		}
+		PopIndent();
+#>
+	CreateTree_Label( obj, textLabel, rootTree );
+}		
+public override void CreateTree_Label( core.DataObject obj, string textLabel, tree.Tree rootTree )
+{
+	This = (<#=c.QualifiedTypeName#>)obj;
+    
+    NameTextBlock = new TextBlock{ Text = textLabel };
+    
+	BitmapImage bitmapImage = TreeImage();
+	if ( bitmapImage != null )
+		TreeViewItem = new TreeViewItem{ Header = new DockPanel { Children = { new Image{ Width=16, Height=16, Source = bitmapImage }, NameTextBlock } } };
+	else
+		TreeViewItem = new TreeViewItem{ Header = NameTextBlock };
+
+	TreeViewItem.DataContext = this;
+	TreeViewItem.Selected += ( sender, e ) => { Selected(); e.Handled = true; };
+	TreeViewItem.Unselected += ( sender, e ) => { Unselected(); e.Handled = true; };
+	TreeViewItem.MouseDoubleClick += ( sender, e ) => { if ( TreeViewItem.IsSelected ) MouseDoubleClicked(); };
+	
+<#+
+        if ( ( c is FolderClass || c is FileClass || c is ProjectClass ) 
+            || ( c is CollectionClass && ( (c as CollectionClass).ItemsClass is FolderClass || (c as CollectionClass).ItemsClass is FileClass  ) )
+        )
+        {
+#>
+	TreeViewItem.IsExpanded = true;
+<#+
+		}
+        if ( c is CollectionClass )
+		{
+			CollectionClass collectionClass = (CollectionClass)c;
+#>
+
+	ContextMenu contextmenu = new ContextMenu();
+	TreeViewItem.ContextMenu = contextmenu;
+		
+<#+
+			foreach( MetadataClass derivedClass in Project.Metadata.BaseAndDerivedClasses( collectionClass.ItemsClass ) )
+			{
+				if ( !(derivedClass is AbstractClass) )
+				{
+#>
+
+	{ 
+		MenuItem menuItem = new MenuItem();
+		menuItem.Header = "New <#= derivedClass.TypeName #>";
+		menuItem.Click += ( sender, e ) => 
+		{
+			<#= derivedClass.QualifiedTypeName #> item = new <#= derivedClass.QualifiedTypeName #>();
+<#+
+					Member memberName = derivedClass.FindMemberDeep( m => m is ValueName );
+					if ( memberName != null )
+					{
+						Write( "\t\t\titem." + memberName.Name + " = " );
+						if ( (memberName as ValueName).DefaultValue.Length > 0 )
+							WriteLine( (memberName as ValueName).DefaultValue + ";");
+						else
+							WriteLine( "\"" + derivedClass.TypeName + "\";");
+					}
+#>
+			This.Add ( item );
+
+			<#= derivedClass.QualifiedTypeName + "Tree" #> treeItem = Trees.CreateTreeObjectFor < <#= derivedClass.QualifiedTypeName + "Tree" #> >( item );	
+			treeItem.CreateTree( item, rootTree );
+			Add( treeItem );
+			TreeViewItem.Items.Add( treeItem.TreeViewItem );
+			NewObject( item );
+		};
+		contextmenu.Items.Add(menuItem);			
+	};
+<#+
+				}
+			}
+#>
+	{ 
+		MenuItem menuItem = new MenuItem();
+		menuItem.Header = "Delete";
+		menuItem.Click += ( sender, e ) => 
+		{
+			TreeViewItem selectedTreeViewItem = (TreeViewItem)rootTree.TreeView.SelectedItem;
+			if ( selectedTreeViewItem != null && selectedTreeViewItem != TreeViewItem )
+			{
+				<#= collectionClass.ItemsClass.QualifiedTypeName + "Tree" #> treeObject = selectedTreeViewItem.DataContext as <#= collectionClass.ItemsClass.QualifiedTypeName + "Tree" #>;
+				if ( treeObject != null )
+				{
+				    treeObject.DestroyTree();
+					TreeViewItem.Items.Remove( treeObject.TreeViewItem );
+					Remove( treeObject );
+					This.Remove( treeObject.This );
+					DeleteObject( treeObject.This );
+				}
+			}
+		};
+		contextmenu.Items.Add(menuItem);			
+	};
+<#+
+		}
+#>
+	CreateTree_Base( obj, rootTree );
+}
+
+protected override void	CreateTree_Base( core.DataObject obj, tree.Tree rootTree )
+{
+	This = (<#=c.QualifiedTypeName#>)obj;
+	base.CreateTree_Base( obj, rootTree );
+<#+
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> item in This )
+	{
+<#+
+				if ( collectionClass.ItemsClass is FolderStorageClass )
+				{
+#>
+		if ( rootTree.FolderStorage == null || rootTree.FolderStorage == item || rootTree.FolderStorage.DependsOn( item ) )
+<#+
+				}
+#>
+		if ( rootTree.Predicate == null || rootTree.Predicate( item ) )
+		{
+			<#= collectionClass.ItemsClass.QualifiedTypeName + "Tree" #> treeItem = Trees.CreateTreeObjectFor < <#= collectionClass.ItemsClass.QualifiedTypeName + "Tree" #> >( item );	
+			treeItem.CreateTree( item, rootTree );
+			{
+				Add( treeItem );
+				TreeViewItem.Items.Add( treeItem.TreeViewItem );
+			}
+		}
+	}
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	if ( rootTree.Predicate == null || rootTree.Predicate( This.<#= collection.Name #> ) )
+	{
+		<#= collection.Name #> = Trees.CreateTreeObjectFor < <#= collection.Type.QualifiedTypeName + "Tree" #> >( This.<#= collection.Name #> );
+		<#= collection.Name #>.CreateTree_Label( This.<#= collection.Name #>, "<#= collection.Name #>", rootTree );
+		TreeViewItem.Items.Add( <#= collection.Name #>.TreeViewItem );
+	}
+	foreach ( <#=collection.Type.ItemsClass.QualifiedTypeName#>Tree collectionElement in <#=collection.Name#> )
+	{
+<#+
+					foreach( Member childMember in collection.Type.ItemsClass.MembersDeep )
+						if ( childMember is ParentReference && (childMember as ParentReference).Type == c )
+							WriteLine("\t\tcollectionElement." + childMember.Name + " = this;" );
+#>
+	}	
+<#+
+				}
+				if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( rootTree.ShowFileStorage )
+	{
+		if ( rootTree.Predicate == null || rootTree.Predicate( This.<#= fileStorage.Name #> ) )
+			if ( This.<#= fileStorage.Name #> != null )
+			{			
+				<#= fileStorage.Name #> = Trees.CreateTreeObjectFor < <#= fileStorage.Type.QualifiedTypeName + "Tree" #> >( This.<#= fileStorage.Name #> );
+				<#= fileStorage.Name #>.CreateTree_Label( This.<#= fileStorage.Name #>, "<#= fileStorage.Name #>", rootTree );
+				<#= fileStorage.Name #>.TreeViewItem.IsExpanded = true;
+				TreeViewItem.Items.Add( <#= fileStorage.Name #>.TreeViewItem );			
+<#+
+					foreach( Member childMember in fileStorage.Type.MembersDeep )
+						if ( childMember is ParentReference && ( childMember as ParentReference).Type == c )
+							WriteLine( "\t\t" + m.Name + "." + childMember.Name + " = this;" );
+#>				
+			}
+	}
+<#+
+				}
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					MetadataClass metadataClass = value.Type as MetadataClass;
+					if ( value.IsGuiTreeNode )
+					{
+						if ( metadataClass is FolderStorageClass )
+						{
+#>
+	if ( rootTree.FolderStorage == null || rootTree.FolderStorage == This.<#= value.Name #> )
+<#+
+						}
+#>
+	if ( rootTree.Predicate == null || rootTree.Predicate( This.<#= value.Name #> ) )
+		if ( This.<#= value.Name #> != null )
+		{
+			<#= value.Name #> = Trees.CreateTreeObjectFor < <#= value.Type.QualifiedTypeName + "Tree" #> >( This.<#= value.Name #> );
+			<#= value.Name #>.CreateTree_Label( This.<#= value.Name #>, "<#= value.Name #>", rootTree );
+			TreeViewItem.Items.Add( <#= value.Name #>.TreeViewItem );
+<#+
+						foreach( Member childMember in metadataClass.MembersDeep )
+							if ( childMember is ParentReference && ( childMember as ParentReference).Type == c )
+								WriteLine( "\t\t\t" + m.Name + "." + childMember.Name + " = this;" );
+#>		}
+<#+
+					}
+				}
+			}
+#>
+}
+
+public override void ObjectDataToControls()
+{
+	ObjectDataToControls_Base();
+}
+protected override void ObjectDataToControls_Base()
+{
+<#+
+			{
+				Member memberName = c.FindMemberDeep( m => m is ValueName );
+				if ( memberName != null )
+					WriteLine("\tNameTextBlock.Text = This." + memberName.Name + ";");
+			}
+
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName + "Tree" #> treeItem in this )
+		treeItem.ObjectDataToControls();
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #>.ObjectDataToControls();
+<#+
+				}
+				if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( <#= fileStorage.Name #> != null )
+		<#= fileStorage.Name #>.ObjectDataToControls();
+<#+
+				}
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.IsGuiTreeNode )
+					{
+#>
+	if ( <#= value.Name #> != null )
+		<#= value.Name #>.ObjectDataToControls();
+<#+
+					}
+				}
+			}
+#>
+	base.ObjectDataToControls_Base();
+}
+
+public override core.IFolderStorageObject ParentFolderStorage() 
+{
+<#+
+			if ( c is FolderStorageClass )
+			{
+#>
+	return This;
+<#+
+			}
+			else
+			{
+				foreach( Member m in c.Members )
+				{
+					if ( m is ParentReference )
+					{
+						ParentReference parentReference = (ParentReference)m;
+#>
+	if ( <#= parentReference.Name #> != null )
+	{
+		core.IFolderStorageObject parentStorage = <#= parentReference.Name #>.ParentFolderStorage();
+		if ( parentStorage != null )
+			return parentStorage;
+	}
+<#+
+					}
+				}
+#>
+	return base.ParentFolderStorage();
+<#+
+			}
+#>
+}
+<#+
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+bool ITreeCollection.CanContain( TreeObject treeObject )
+{
+	return treeObject is <#= collectionClass.ItemsClass.QualifiedTypeName #>Tree;				
+}
+void ITreeCollection.Add( TreeObject treeObject )
+{
+	<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree item = (<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree)treeObject;
+	This.Add( item.This );
+	Add( item );
+	TreeViewItem.Items.Add( item.TreeViewItem );
+}
+void ITreeCollection.AddAfter( TreeObject treeObjectAfter, TreeObject treeObject )
+{
+	<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree after = (<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree)treeObjectAfter;
+	<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree item = (<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree)treeObject;
+
+	int index = 0;
+	if ( after != null )
+		index = IndexOf( after ) + 1;
+	
+	This.Insert( index, item.This );
+	Insert( index, item );
+	TreeViewItem.Items.Insert( index, item.TreeViewItem );
+}
+void ITreeCollection.Remove( TreeObject treeObject )
+{
+	<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree item = (<#= collectionClass.ItemsClass.QualifiedTypeName #>Tree)treeObject;
+	TreeViewItem.Items.Remove( item.TreeViewItem );
+	Remove( item );
+	This.Remove( item.This );		
+}
+<#+
+			}
+
+			PopIndent();
+			WriteLine( "}" );	
+
+			if ( c.Namespace.Length > 0 )
+			{
+				PopIndent();
+				WriteLine( "} // namespace " + c.Namespace );
+			}
+			
+			WriteLine("");	
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

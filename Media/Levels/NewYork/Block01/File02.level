@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Scene xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Guid="08372568-8d2e-4bf3-8bb2-b626dc2af16c">
+  <objects>
+    <SceneMesh Guid="d91c2d3d-8cdc-4761-bbbb-8dd037b35040">
+      <position x="1" y="1" z="1" />
+      <scale>0.1</scale>
+      <color r="255" g="255" b="255" a="0" />
+      <lod>1</lod>
+      <visible>false</visible>
+      <next>0fb5dfc9-d3dc-47eb-a685-e0ac8120895a</next>
+    </SceneMesh>
+  </objects>
+</Scene>

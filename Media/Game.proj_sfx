@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Game_SpecialFX xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Guid="d5dc2c6f-8e18-4ef4-ae21-b01a9be8eae7">
+  <levels Guid="7040e65d-7d50-499f-aa81-815e7a3d90f6">
+    <folders>
+      <LevelFolder Guid="f998da17-5f35-4a33-acfa-41eb3df3146f" name="NewYork">
+        <blocks>
+          <LevelBlock Guid="c2114814-da68-4377-b456-bd02c0a96fc2" name="Block01">
+            <files>
+              <LevelFile Guid="9772007e-5680-4fcf-95cb-84cc4d91b7cf" name="File01" />
+              <LevelFile Guid="1d16c996-5ffb-44dd-9c38-d4200257ccce" name="File02" />
+              <LevelFile Guid="ac2dec4d-d085-4d32-b7a9-a1ff5fe23de4" name="File03" />
+            </files>
+          </LevelBlock>
+          <LevelBlock Guid="07de97b8-a042-4f4b-8282-8b430e3ce6e8" name="Block02">
+            <files>
+              <LevelFile Guid="c08afdc8-33f9-4b72-ac41-dc293e6ac283" name="File01" />
+              <LevelFile Guid="2336723f-92a4-4367-91b3-d7784368b62d" name="File02" />
+            </files>
+          </LevelBlock>
+          <LevelBlock Guid="7957367e-112d-4b9e-adf7-2453ba334ad8" name="Block03">
+            <files>
+              <LevelFile Guid="a41c2d83-a59b-47a3-b5ef-3eac8e54f622" name="File01" />
+              <LevelFile Guid="ac9f0136-6fb5-4594-8585-83a4d0d239f3" name="File02" />
+            </files>
+          </LevelBlock>
+        </blocks>
+      </LevelFolder>
+      <LevelFolder Guid="3baf0dd1-6071-47e2-a196-b5473dcb5084" name="SanFrancisco">
+        <blocks>
+          <LevelBlock Guid="928d099f-8ee4-40df-9470-152570912075" name="Block01">
+            <files>
+              <LevelFile Guid="71ce3c1d-45a1-4c33-9138-e9f04275140b" name="File01" />
+              <LevelFile Guid="00d577a5-a391-450c-895b-7f97dde31591" name="File02" />
+            </files>
+          </LevelBlock>
+          <LevelBlock Guid="31fad0c0-d237-4251-8769-748a8fab94d7" name="Block02">
+            <files>
+              <LevelFile Guid="280cd187-180a-4783-9078-c8741c47233f" name="File01" />
+              <LevelFile Guid="4cad460a-045b-499c-938f-b48237eda0bc" name="File02" />
+            </files>
+          </LevelBlock>
+          <LevelBlock Guid="e5ed1396-872d-410d-87b0-bfa4f3087bf9" name="Block03">
+            <files>
+              <LevelFile Guid="12955810-f068-4aa0-94f1-458e54fdbd26" name="File01" />
+              <LevelFile Guid="11c7454c-5aef-4f59-bfdc-3a86f53847d6" name="File02" />
+            </files>
+          </LevelBlock>
+        </blocks>
+      </LevelFolder>
+      <LevelFolder Guid="b6eba227-96b4-4ea4-b61a-e8fc8f6d4a4d" name="Paris">
+        <blocks>
+          <LevelBlock Guid="d6e7d468-642b-4a21-9173-31cdbc3b5ec5" name="Block01">
+            <files>
+              <LevelFile Guid="b7d76b0d-c789-47f1-ad4a-a3f3fc674024" name="File01" />
+              <LevelFile Guid="eb2ffcb5-d516-48d1-bb78-48b7cd0b8231" name="File02" />
+            </files>
+          </LevelBlock>
+          <LevelBlock Guid="6667f279-832e-408a-9564-f32c3fce9576" name="Block02">
+            <files>
+              <LevelFile Guid="c0ef5465-4506-46be-a844-17f83255b6ad" name="File01" />
+            </files>
+          </LevelBlock>
+          <LevelBlock Guid="c2536f9f-c429-4514-891f-d68f6e3beaf8" name="Block03">
+            <files>
+              <LevelFile Guid="cf57c419-c357-4b4f-964c-c2fe33478b8c" name="File01" />
+              <LevelFile Guid="1136e98a-76f0-4849-843f-89a1c38cedf8" name="File02" />
+            </files>
+          </LevelBlock>
+        </blocks>
+      </LevelFolder>
+    </folders>
+  </levels>
+</Game_SpecialFX>

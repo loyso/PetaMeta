@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Metadata">
+      <UniqueIdentifier>{eedc9003-a189-48ca-9c03-cd2976e6bca1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Metadata\Engine">
+      <UniqueIdentifier>{5693bc3e-211c-4613-9637-a1af400b19d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Metadata\Game">
+      <UniqueIdentifier>{f0bea1e7-cd2e-4789-8960-df54055c3613}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MetaMetadata">
+      <UniqueIdentifier>{f5cf6a1d-4244-4804-8564-77a3bbbb6e59}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Metadata\Engine\Fundamental.cpp">
+      <Filter>Metadata\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Engine\Fundamental.Partial.cpp">
+      <Filter>Metadata\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Engine\Fundamental.Reflection.cpp">
+      <Filter>Metadata\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Gui.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Gui.Partial.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Gui.Reflection.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Project.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Project.Partial.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Project.Reflection.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectGlobals.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectGlobals.Partial.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectGlobals.Reflection.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectGui.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectGui.Partial.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectGui.Reflection.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectLevels.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectLevels.Partial.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\ProjectLevels.Reflection.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Scene.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Scene.Lua.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Scene.Partial.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Metadata\Game\Scene.Reflection.cpp">
+      <Filter>Metadata\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaClasses.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaClasses.Partial.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaFunction.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaFunction.Partial.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaFundamental.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaFundamental.Partial.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaPrimitives.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaPrimitives.Partial.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaProject.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaMetadata\MetaProject.Partial.cpp">
+      <Filter>MetaMetadata</Filter>
+    </ClCompile>
+    <ClCompile Include="Core.cpp" />
+    <ClCompile Include="CoreLua.cpp" />
+    <ClCompile Include="DataCpp.Lua.cpp" />
+    <ClCompile Include="DataCpp.Reflection.cpp" />
+    <ClCompile Include="DataCpp.RemoteServer.cpp" />
+    <ClCompile Include="DataCpp.RemoteServer.Partial.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Metadata\Engine\Fundamental.h">
+      <Filter>Metadata\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Engine\Fundamental.Partial.h">
+      <Filter>Metadata\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Engine\Fundamental.Reflection.h">
+      <Filter>Metadata\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Gui.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Gui.Partial.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Gui.Reflection.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Project.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Project.Partial.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Project.Reflection.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectGlobals.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectGlobals.Partial.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectGlobals.Reflection.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectGui.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectGui.Partial.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectGui.Reflection.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectLevels.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectLevels.Partial.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\ProjectLevels.Reflection.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Scene.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Scene.Lua.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Scene.Partial.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata\Game\Scene.Reflection.h">
+      <Filter>Metadata\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaClasses.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaClasses.Partial.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaFunction.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaFunction.Partial.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaFundamental.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaFundamental.Partial.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaPrimitives.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaPrimitives.Partial.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaProject.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaMetadata\MetaProject.Partial.h">
+      <Filter>MetaMetadata</Filter>
+    </ClInclude>
+    <ClInclude Include="Core.h" />
+    <ClInclude Include="CoreLua.h" />
+    <ClInclude Include="DataCpp.Lua.h" />
+    <ClInclude Include="DataCpp.Reflection.h" />
+    <ClInclude Include="DataCpp.RemoteServer.h" />
+    <ClInclude Include="DataCpp.RemoteServer.Partial.h" />
+    <ClInclude Include="Reflection.h" />
+  </ItemGroup>
+</Project>

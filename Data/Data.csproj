@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2933EA99-E934-42ED-AD3C-A3FF89832CF4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Data</RootNamespace>
+    <AssemblyName>Data</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Bin\Debug\</OutputPath>
+    <IntermediateOutputPath>..\Garbage\Debug\Data\</IntermediateOutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0436</NoWarn>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Bin\Release\</OutputPath>
+    <IntermediateOutputPath>..\Garbage\Release\Data\</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0436</NoWarn>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DataCs.Operations.cs" />
+    <Compile Include="DataCs.Partial.cs" />
+    <Compile Include="DataCs.Reflection.cs" />
+    <Compile Include="DataCs.Remoting.cs" />
+    <Compile Include="DataCs.Serialization.cs" />
+    <Compile Include="Metadata\Engine\Fundamental.ByteStream.cs" />
+    <Compile Include="Metadata\Engine\Fundamental.cs" />
+    <Compile Include="Metadata\Engine\Fundamental.Operations.cs" />
+    <Compile Include="Metadata\Engine\Fundamental.Reflection.cs" />
+    <Compile Include="Metadata\Engine\Fundamental.Remoting.cs" />
+    <Compile Include="Metadata\Engine\Fundamental.Serialization.cs" />
+    <Compile Include="Metadata\Game\Gui.ByteStream.cs" />
+    <Compile Include="Metadata\Game\Gui.cs" />
+    <Compile Include="Metadata\Game\Gui.Operations.cs" />
+    <Compile Include="Metadata\Game\Gui.Reflection.cs" />
+    <Compile Include="Metadata\Game\Gui.Remoting.cs" />
+    <Compile Include="Metadata\Game\Gui.Serialization.cs" />
+    <Compile Include="Metadata\Game\Project.ByteStream.cs" />
+    <Compile Include="Metadata\Game\Project.cs" />
+    <Compile Include="Metadata\Game\Project.Operations.cs" />
+    <Compile Include="Metadata\Game\Project.Reflection.cs" />
+    <Compile Include="Metadata\Game\Project.RemoteClient.cs" />
+    <Compile Include="Metadata\Game\Project.Remoting.cs" />
+    <Compile Include="Metadata\Game\Project.Serialization.cs" />
+    <Compile Include="Metadata\Game\ProjectGlobals.ByteStream.cs" />
+    <Compile Include="Metadata\Game\ProjectGlobals.cs" />
+    <Compile Include="Metadata\Game\ProjectGlobals.Operations.cs" />
+    <Compile Include="Metadata\Game\ProjectGlobals.Reflection.cs" />
+    <Compile Include="Metadata\Game\ProjectGlobals.Remoting.cs" />
+    <Compile Include="Metadata\Game\ProjectGlobals.Serialization.cs" />
+    <Compile Include="Metadata\Game\ProjectGui.ByteStream.cs" />
+    <Compile Include="Metadata\Game\ProjectGui.cs" />
+    <Compile Include="Metadata\Game\ProjectGui.Operations.cs" />
+    <Compile Include="Metadata\Game\ProjectGui.Reflection.cs" />
+    <Compile Include="Metadata\Game\ProjectGui.Remoting.cs" />
+    <Compile Include="Metadata\Game\ProjectGui.Serialization.cs" />
+    <Compile Include="Metadata\Game\ProjectLevels.ByteStream.cs" />
+    <Compile Include="Metadata\Game\ProjectLevels.cs" />
+    <Compile Include="Metadata\Game\ProjectLevels.Operations.cs" />
+    <Compile Include="Metadata\Game\ProjectLevels.Reflection.cs" />
+    <Compile Include="Metadata\Game\ProjectLevels.Remoting.cs" />
+    <Compile Include="Metadata\Game\ProjectLevels.Serialization.cs" />
+    <Compile Include="Metadata\Game\Scene.ByteStream.cs" />
+    <Compile Include="Metadata\Game\Scene.cs" />
+    <Compile Include="Metadata\Game\Scene.Operations.cs" />
+    <Compile Include="Metadata\Game\Scene.Reflection.cs" />
+    <Compile Include="Metadata\Game\Scene.RemoteClient.cs" />
+    <Compile Include="Metadata\Game\Scene.Remoting.cs" />
+    <Compile Include="Metadata\Game\Scene.Serialization.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DataCpp.tt.log">
+      <DependentUpon>DataCpp.tt</DependentUpon>
+    </None>
+    <None Include="DataCpp.log">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DataCpp.tt</DependentUpon>
+    </None>
+    <None Include="DataCppUser.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DataCppUser.log</LastGenOutput>
+    </None>
+    <None Include="DataCppUser.log">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DataCppUser.tt</DependentUpon>
+    </None>
+    <None Include="DataCs.log">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DataCs.tt</DependentUpon>
+    </None>
+    <None Include="DataCs.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DataCs.log</LastGenOutput>
+    </None>
+    <None Include="DataCpp.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DataCpp.log</LastGenOutput>
+    </None>
+    <None Include="DataCs.tt.log">
+      <DependentUpon>DataCs.tt</DependentUpon>
+    </None>
+    <None Include="MetadataCpp.tt.log">
+      <DependentUpon>MetadataCpp.tt</DependentUpon>
+    </None>
+    <None Include="MetadataCpp.log">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>MetadataCpp.tt</DependentUpon>
+    </None>
+    <None Include="MetadataCpp.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MetadataCpp.log</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BootstrapReflection\BootstrapReflection.csproj">
+      <Project>{2A07930C-3668-4DDE-BC1A-7795B1BD3C56}</Project>
+      <Name>BootstrapReflection</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Bootstrap\Bootstrap.csproj">
+      <Project>{7951C333-C13E-4109-92BC-B829986FDB06}</Project>
+      <Name>Bootstrap</Name>
+      <Aliases>global</Aliases>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

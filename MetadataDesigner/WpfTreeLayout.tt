@@ -1,0 +1,14 @@
+﻿<#@ template hostspecific="True"#>
+<#@ assembly name="$(SolutionDir)Bin\Debug\Metadata.dll" #>
+<#@ import namespace="metadata" #>
+<#@ include file="T4Toolbox.tt" #>
+<#@ output extension=".log" #>
+<#
+	MetadataProject project = null;
+	project = project.ProjectLoad( Host.ResolvePath(@"..\Media\MetaMetadata" + project.ProjectExtension() ) );
+	project.Load();
+	const string csOutputProject = @"MetadataDesigner.csproj";
+	const string csReflectionMetadataNamespace = "";
+#>
+<#@ include file="..\Transformations\Cs\GenerateCsWpfLayout.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsWpfTree.tt" #>

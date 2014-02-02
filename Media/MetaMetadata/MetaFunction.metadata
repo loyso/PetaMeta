@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <AbstractClass Guid="aba5e3c4-08bd-4c7a-afda-102011c5e648" TypeName="Function" BaseClass="8131954c-95e0-4bde-9c6a-641cebf825e8">
+      <Members>
+        <Value Guid="7430cdfc-cb0e-4426-8f1e-45958c1eaa0e" Name="Result" Type="77fe2b16-661a-47f4-bbd4-4fb39a96ff95" IsPolymorphic="true" />
+        <Collection Guid="a6895fff-ecd1-40d1-b0cc-7746e51bee43" Name="Arguments" Type="c6f5b5b3-289a-4ee1-a1b1-dc60853418f3" />
+        <Value Guid="b8c12b23-448b-4da6-8608-5e9e0a75173e" Name="Remote" Type="addabe9f-c88e-4c0c-9727-a7428ffc10b0" IsXmlAttr="true" DefaultValue="None" DefaultValueXml="None" />
+        <Value Guid="f60cb677-2282-4081-9c5e-283ebd449074" Name="IsStatic" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="false" DefaultValueXml="false" />
+      </Members>
+    </AbstractClass>
+    <MetadataClass Guid="af78a1f8-b71d-4bbf-9955-622bf4ce35ea" TypeName="FunctionUser" BaseClass="aba5e3c4-08bd-4c7a-afda-102011c5e648">
+      <Members>
+        <Value Guid="278bcc7c-065c-4ad4-92ac-2b9cf42d3ed1" Name="ExposeToLua" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="false" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="20d7e3f7-940d-4c68-aa5a-6d3a3804e023" TypeName="FunctionLua" BaseClass="aba5e3c4-08bd-4c7a-afda-102011c5e648">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="b2f2214a-3e33-4d16-92da-115d4d8b916d" TypeName="FunctionLuaCallCC" BaseClass="aba5e3c4-08bd-4c7a-afda-102011c5e648">
+      <Members />
+    </MetadataClass>
+    <AbstractClass Guid="77fe2b16-661a-47f4-bbd4-4fb39a96ff95" TypeName="Argument" IsReferenced="false">
+      <Members>
+        <ValueName Guid="812edeb0-34c1-436e-b949-f9cf9471dfa5" Name="Name" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;arg&quot;" DefaultValueXml="&quot;arg&quot;" />
+      </Members>
+    </AbstractClass>
+    <CollectionClass Guid="c6f5b5b3-289a-4ee1-a1b1-dc60853418f3" TypeName="ArgumentsCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>77fe2b16-661a-47f4-bbd4-4fb39a96ff95</ItemsClass>
+      <IsPolymorphic>true</IsPolymorphic>
+    </CollectionClass>
+    <MetadataClass Guid="9b68d364-12fb-4813-9240-10377f8bff68" TypeName="ArgumentValue" BaseClass="77fe2b16-661a-47f4-bbd4-4fb39a96ff95" IsReferenced="false">
+      <Members>
+        <Reference Guid="e9b836b7-3cb2-48fc-9d83-92a5f84ac40a" Name="Type" Type="e3b634e0-b02b-4516-ae0f-8bb8777f114a" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="fc3587ab-6fab-4fc3-bdc2-746f4a16579f" TypeName="ArgumentReference" BaseClass="77fe2b16-661a-47f4-bbd4-4fb39a96ff95" IsReferenced="false">
+      <Members>
+        <Reference Guid="35dd7b0b-394e-4057-bb03-7e18c8851064" Name="Type" Type="47c3a908-9773-4b3c-8d34-63703e726461" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <Enumeration Guid="addabe9f-c88e-4c0c-9727-a7428ffc10b0" TypeName="RemoteType">
+      <Enumerators>
+        <Enumerator Name="None" IntegralValue="0" />
+        <Enumerator Name="Server" IntegralValue="1" />
+        <Enumerator Name="Client" IntegralValue="2" />
+      </Enumerators>
+    </Enumeration>
+  </Types>
+</MetadataFileContent>

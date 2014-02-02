@@ -1,0 +1,283 @@
+﻿<#
+	{
+		HierarchyDeclarationCommon core = new HierarchyDeclarationCommon( project );
+		core.Output.File = System.IO.Path.GetFileNameWithoutExtension ( Host.TemplateFile ) + ".Hierarchy.cs";
+		core.Output.Project = csOutputProject;
+		core.Render();
+	}
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		if ( metadataFile.GenerateGui && metadataFile.Content.Classes.GetEnumerator().MoveNext() )
+		{	
+			HierarchyDeclaration hierarchyDeclaration = new HierarchyDeclaration( project, metadataFile );
+			hierarchyDeclaration.Output.File = metadataFile.RelativeName + ".Hierarchy.cs";
+			hierarchyDeclaration.Output.Project = csOutputProject;
+			hierarchyDeclaration.Render();
+		}
+	}
+#>
+<#+
+public class HierarchyDeclarationCommon : Template
+{
+	protected MetadataProject Project;
+	
+	public HierarchyDeclarationCommon( MetadataProject project )
+	{
+		Project = project;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace <#= Project.CoreNamespace #>
+{
+	public static class ObjectToHierarchy
+	{
+		delegate core.HierarchyObject DelegateCreateHierarchy();
+	
+		private static Dictionary<System.Type,DelegateCreateHierarchy> DataTypeToHierarchyType = new Dictionary<System.Type,DelegateCreateHierarchy>();	
+	
+		static ObjectToHierarchy()
+		{
+<#+
+		PushIndent("\t\t\t");
+		foreach( MetadataClass c in Project.Metadata.Classes )
+			if ( c.Parent.Parent.GenerateGui && !(c is AbstractClass ) )
+				WriteLine( "DataTypeToHierarchyType.Add( typeof(" + c.QualifiedTypeName + "), () => { return new " + c.QualifiedTypeName + "_Hierarchy(); } );" );
+		PopIndent();
+#>	
+		}
+
+		public static core.HierarchyObject Create( core.DataObject obj )
+		{
+			DelegateCreateHierarchy delegateCreate;
+			if ( DataTypeToHierarchyType.TryGetValue( obj.GetType(), out delegateCreate ) )
+			{
+				core.HierarchyObject hierarchyObject = delegateCreate();
+				hierarchyObject.CreateHierarchy( obj );
+				return hierarchyObject;
+			}
+			return null;			
+		}
+	
+		public static T CreateHierarchyObjectFor < T >( core.DataObject obj ) where T : core.HierarchyObject
+		{
+			core.HierarchyObject hierarchyObject = Create( obj );
+			if ( hierarchyObject == null )
+				return null;
+				
+			T typedObject = hierarchyObject as T;
+			if ( typedObject == null )
+				throw new core.TypeMappingException( obj.GetType() );
+			return typedObject;
+		}	
+	}
+} // // namespace <#= Project.CoreNamespace #>
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+} // HierarchyDeclarationCommon
+#>
+<#+
+public class HierarchyDeclaration : Template
+{
+	protected MetadataProject	Project;
+	protected MetadataFile		File;
+	
+	public HierarchyDeclaration( MetadataProject project, MetadataFile file )
+	{
+		Project = project;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+using System;
+using System.Collections.Generic;
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine("");
+			PushIndent("\t");
+		}
+
+		foreach( MetadataClass c in File.Content.Classes )
+		{
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + c.Namespace );
+				WriteLine( "{" );
+				PushIndent("\t");
+			}
+			
+			string baseDeclaration = "core.HierarchyObject";
+			if ( c.IsReferenced || c is FolderClass || c is FileClass )
+				baseDeclaration = "core.ReferenceHierarchyObject";		
+			
+			if ( c is CollectionClass )
+				baseDeclaration = "core.HierarchyCollectionOf < " + ( c as CollectionClass ).ItemsClass.QualifiedTypeName + "_Hierarchy >";
+			
+			if ( c.BaseClass != null )
+				baseDeclaration = c.BaseClass.TypeName + "_Hierarchy";
+
+			string classModifiers = "public";
+			if ( c is AbstractClass )
+				classModifiers += " abstract";
+			classModifiers += " partial";					
+						
+			WriteLine( classModifiers + " class " + c.TypeName + "_Hierarchy : " + baseDeclaration );
+			WriteLine( "{" );
+			PushIndent("\t");
+#>
+public new <#=c.QualifiedTypeName#> This;
+
+<#+
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = m as Collection;
+					CollectionClass collectionClass = collection.Type as CollectionClass;
+#>
+
+private <#= collectionClass.QualifiedTypeName + "_Hierarchy" #> <#= collection.Name #> = new <#= collectionClass.QualifiedTypeName + "_Hierarchy" #>();
+<#+
+				}
+				if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+private <#= fileStorage.Type.QualifiedTypeName + "_Hierarchy" #> <#= fileStorage.Name #>;
+<#+
+				}
+				if ( m is ParentReference )
+				{
+					ParentReference parentReference = (ParentReference)m;
+#>
+public <#= parentReference.Type.QualifiedTypeName + "_Hierarchy" #> <#= parentReference.Name #>;
+<#+
+				}
+				if ( m is Value )
+				{
+					Value value = m as Value;
+					if ( value.Type is MetadataClass )
+					{
+#>
+private <#= value.Type.QualifiedTypeName + "_Hierarchy" #> <#= value.Name #>;
+<#+
+					}
+				}
+			}
+#>
+public override void CreateHierarchy( core.DataObject obj )
+{
+	This = (<#=c.QualifiedTypeName#>)obj;
+	CreateHierarchy_Base( obj );
+}		
+protected override void	CreateHierarchy_Base( core.DataObject obj )
+{
+	This = (<#=c.QualifiedTypeName#>)obj;
+	base.CreateHierarchy_Base( obj );
+<#+
+			if ( c is CollectionClass )
+			{
+				CollectionClass collectionClass = (CollectionClass)c;
+#>
+	foreach( <#= collectionClass.ItemsClass.QualifiedTypeName #> item in This )
+	{
+		<#= collectionClass.ItemsClass.QualifiedTypeName + "_Hierarchy" #> hierarchyItem = <#= Project.CoreNamespace #>.ObjectToHierarchy.CreateHierarchyObjectFor < <#= collectionClass.ItemsClass.QualifiedTypeName + "_Hierarchy" #> >( item );	
+		hierarchyItem.CreateHierarchy( item );
+		Add( hierarchyItem );
+	}
+<#+
+			}
+			
+			foreach( Member m in c.Members )
+			{
+				if ( m is Collection )
+				{
+					Collection collection = (Collection)m;
+#>
+	<#= collection.Name #> = <#= Project.CoreNamespace #>.ObjectToHierarchy.CreateHierarchyObjectFor < <#= collection.Type.QualifiedTypeName + "_Hierarchy" #> >( This.<#= collection.Name #> );
+	<#= collection.Name #>.CreateHierarchy( This.<#= collection.Name #> );
+	foreach ( <#=collection.Type.ItemsClass.QualifiedTypeName#>_Hierarchy collectionElement in <#=m.Name#> )
+	{
+<#+
+					foreach( Member childMember in collection.Type.ItemsClass.MembersDeep )
+						if ( childMember is ParentReference && (childMember as ParentReference).Type == c )
+							WriteLine("\t\tcollectionElement." + childMember.Name + " = this;" );
+#>
+	}
+<#+
+				}
+				if ( m is FileStorage )
+				{
+					FileStorage fileStorage = m as FileStorage;
+#>
+	if ( This.<#= fileStorage.Name #> != null )
+	{			
+		<#= fileStorage.Name #> = <#= Project.CoreNamespace #>.ObjectToHierarchy.CreateHierarchyObjectFor < <#= fileStorage.Type.QualifiedTypeName + "_Hierarchy" #> >( This.<#= fileStorage.Name #> );
+		<#= fileStorage.Name #>.CreateHierarchy( This.<#= fileStorage.Name #> );
+<#+
+						foreach( Member childMember in fileStorage.Type.MembersDeep )
+							if ( childMember is ParentReference && ( childMember as ParentReference).Type == c )
+								WriteLine( "\t\t" + m.Name + "." + childMember.Name + " = this;" );
+#>
+	}
+<#+
+				}
+				if ( m is Value )
+				{
+					Value value = (Value)m;
+					if ( value.Type is MetadataClass )
+					{
+						MetadataClass metadataClass = (MetadataClass)value.Type;
+#>
+	if ( This.<#= value.Name #> != null )
+	{
+		<#= value.Name #> = <#= Project.CoreNamespace #>.ObjectToHierarchy.CreateHierarchyObjectFor < <#= value.Type.QualifiedTypeName + "_Hierarchy" #> >( This.<#= value.Name #> );
+		<#= value.Name #>.CreateHierarchy( This.<#= value.Name #> );
+<#+
+						foreach( Member childMember in metadataClass.MembersDeep )
+							if ( childMember is ParentReference && ( childMember as ParentReference).Type == c )
+								WriteLine( "\t\t" + m.Name + "." + childMember.Name + " = this;" );
+#>
+	}
+<#+
+					}
+				}
+			}
+#>
+}
+<#+
+			PopIndent();
+			WriteLine( "}" );	
+
+			if ( c.Namespace.Length > 0 )
+			{
+				PopIndent();
+				WriteLine( "} // namespace " + c.Namespace );
+			}
+			
+			WriteLine("");	
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			PopIndent();
+			WriteLine( qualifiedNamespaceEnd );
+		}
+	}
+}
+#>

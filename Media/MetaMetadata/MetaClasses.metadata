@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <AbstractClass Guid="e3b634e0-b02b-4516-ae0f-8bb8777f114a">
+      <Members>
+        <ParentReference Guid="20bb9515-dfc3-496b-97f0-da66fa8178b1" Name="Parent" Type="b384de55-3889-4e3b-a383-7c3cf264f21e" />
+        <ValueName Guid="a87cdfef-bf14-42a4-aa5e-471ca6b68e29" Name="TypeName" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;Type&quot;" DefaultValueXml="&quot;Type&quot;" />
+        <Value Guid="a26355e9-e574-4c7e-be63-3d2d585d0ccd" Name="Namespace" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;&quot;" DefaultValueXml="&quot;&quot;" />
+      </Members>
+    </AbstractClass>
+    <CollectionClass Guid="e2d3ff5d-e975-4087-aec7-d75634b94bac" TypeName="TypesCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>e3b634e0-b02b-4516-ae0f-8bb8777f114a</ItemsClass>
+      <IsPolymorphic>true</IsPolymorphic>
+    </CollectionClass>
+    <MetadataClass Guid="47c3a908-9773-4b3c-8d34-63703e726461" TypeName="MetadataClass" BaseClass="e3b634e0-b02b-4516-ae0f-8bb8777f114a">
+      <Members>
+        <Reference Guid="a1333fb4-41e6-47f2-9719-b7c92abdf3c9" Name="BaseClass" Type="47c3a908-9773-4b3c-8d34-63703e726461" IsXmlAttr="true" />
+        <Value Guid="5fdb1a1f-7f74-4784-881a-425c80b22236" Name="IsReferenced" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="true" DefaultValueXml="true" />
+        <Value Guid="2bf4d845-9d48-46c7-a33e-35012f4823c2" Name="HasMinMax" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="false" DefaultValueXml="false" />
+        <Collection Guid="362ab08e-3cdc-4588-9fef-3f93897b17f9" Name="Members" Type="b6d183d8-6dbe-49e0-9063-e9ec1bb22206" />
+        <Value Guid="a2a6029f-2883-4240-a0bf-0a177fb38cfc" Name="UserDefined" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="false" DefaultValueXml="false" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="51b69392-fa60-4eb9-aebb-f091c741f816" TypeName="AbstractClass" BaseClass="47c3a908-9773-4b3c-8d34-63703e726461">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="7d163957-c506-4762-9e9d-bc6fedefad76" TypeName="CollectionClass" BaseClass="47c3a908-9773-4b3c-8d34-63703e726461">
+      <Members>
+        <Reference Guid="c6155730-59ac-4dfd-9cec-bbd34e5863ae" Name="ItemsClass" Type="47c3a908-9773-4b3c-8d34-63703e726461" />
+        <Value Guid="50dce491-1269-4e18-8b8e-06a92f80ea33" Name="IsPolymorphic" Type="c6eaab28-986d-4b09-8609-2a78636e3027" DefaultValue="false" DefaultValueXml="false" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="e393c39a-0a66-42e6-aa18-e9648b2b2fd0" TypeName="FileClass" BaseClass="47c3a908-9773-4b3c-8d34-63703e726461">
+      <Members>
+        <Value Guid="4267d040-4db8-4558-ada4-bd45f7a423e9" Name="FileExtension" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;data&quot;" DefaultValueXml="&quot;data&quot;" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="5df7f0ff-fccd-44f5-8a91-6cc60617b9e8" TypeName="FolderClass" BaseClass="47c3a908-9773-4b3c-8d34-63703e726461">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="9ebd67ce-440c-4779-a86e-b62c1ce20d50" TypeName="FolderStorageClass" BaseClass="5df7f0ff-fccd-44f5-8a91-6cc60617b9e8">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="cc3f9986-e2dd-41a9-9eaa-81a97b7bdaff" TypeName="ProjectClass" BaseClass="47c3a908-9773-4b3c-8d34-63703e726461" IsReferenced="false">
+      <Members>
+        <Value Guid="58061bf2-5739-41f4-a85b-f8ea1918a697" Name="FileExtension" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;proj&quot;" DefaultValueXml="&quot;proj&quot;" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="b384de55-3889-4e3b-a383-7c3cf264f21e" TypeName="MetadataFileContent" IsReferenced="false">
+      <Members>
+        <ParentReference Guid="064d4c87-50ef-4db2-bb13-6fc6cd043748" Name="Parent" Type="da5e4e32-fc11-454b-8c7b-34a453d1ffed" />
+        <Collection Guid="a8e9eb2f-0ca6-4fc4-92c6-b2bd07959fde" Name="Types" Type="e2d3ff5d-e975-4087-aec7-d75634b94bac" />
+      </Members>
+    </MetadataClass>
+    <AbstractClass Guid="8131954c-95e0-4bde-9c6a-641cebf825e8" TypeName="Member">
+      <Members>
+        <ValueName Guid="41c63d12-22ea-4332-ae1b-46240b0bef48" Name="Name" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;member&quot;" DefaultValueXml="&quot;member&quot;" />
+        <Reference Guid="e09c8b1e-e3bc-438d-8614-b8c90b637901" Name="Group" Type="bf34598e-f132-4f56-859d-c177ad0e3d10" IsXmlAttr="true" />
+      </Members>
+    </AbstractClass>
+    <CollectionClass Guid="b6d183d8-6dbe-49e0-9063-e9ec1bb22206" TypeName="MembersCollection" IsReferenced="false">
+      <Members />
+      <ItemsClass>8131954c-95e0-4bde-9c6a-641cebf825e8</ItemsClass>
+      <IsPolymorphic>true</IsPolymorphic>
+    </CollectionClass>
+    <MetadataClass Guid="0b4b3f43-9ed8-4369-a813-30e0261fc619" TypeName="Value" BaseClass="8131954c-95e0-4bde-9c6a-641cebf825e8">
+      <Members>
+        <Reference Guid="1e3c276a-6706-41f5-a2f0-9b9bd0e35053" Name="Type" Type="e3b634e0-b02b-4516-ae0f-8bb8777f114a" IsXmlAttr="true" />
+        <Value Guid="ff4dcc5d-036d-4ad6-a01a-33862d8ab5c1" Name="IsXmlAttr" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="false" DefaultValueXml="false" />
+        <Value Guid="4c30a0c9-cf7e-4a77-aad8-75204be94bee" Name="IsPolymorphic" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="false" DefaultValueXml="false" />
+        <Value Guid="e97cbb84-fd6f-4fce-9332-129f38a36e56" Name="DefaultValue" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;&quot;" DefaultValueXml="&quot;&quot;" />
+        <Value Guid="b86c5435-a430-4564-8f6e-a7e9f1e446d6" Name="DefaultValueXml" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;&quot;" DefaultValueXml="&quot;&quot;" />
+        <Value Guid="66ba7ac3-2b4d-4745-9e3a-a2b860df3f48" Name="Min" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;&quot;" DefaultValueXml="&quot;&quot;" />
+        <Value Guid="c3a9d19e-1d5f-4284-b6c6-0c58d99ce671" Name="Max" Type="814aa94e-ccce-4776-b55d-eed74be1e30e" IsXmlAttr="true" DefaultValue="&quot;&quot;" DefaultValueXml="&quot;&quot;" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="73af2c25-c223-460e-81d1-07d2a6a82294" TypeName="ValueName" BaseClass="0b4b3f43-9ed8-4369-a813-30e0261fc619">
+      <Members />
+    </MetadataClass>
+    <MetadataClass Guid="8672813c-74b0-4cb3-8091-3ec502e58589" TypeName="Reference" BaseClass="8131954c-95e0-4bde-9c6a-641cebf825e8">
+      <Members>
+        <Reference Guid="2ebf69ad-2f48-4af7-8b5d-22f657c1084a" Name="Type" Type="47c3a908-9773-4b3c-8d34-63703e726461" IsXmlAttr="true" />
+        <Value Guid="786165dc-9a63-487e-834c-d6f8488dfc5e" Name="IsXmlAttr" Type="c6eaab28-986d-4b09-8609-2a78636e3027" IsXmlAttr="true" DefaultValue="false" DefaultValueXml="false" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="a6caf874-4d22-4c44-8da1-641015fff6a5" TypeName="ParentReference" BaseClass="8131954c-95e0-4bde-9c6a-641cebf825e8">
+      <Members>
+        <Reference Guid="4ff714d7-6257-424f-abf0-7e455700a2a1" Name="Type" Type="47c3a908-9773-4b3c-8d34-63703e726461" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="54c58303-5270-49c1-93fa-183deadafc2d" TypeName="Collection" BaseClass="8131954c-95e0-4bde-9c6a-641cebf825e8">
+      <Members>
+        <Reference Guid="c33f3a0b-9cd9-4ac7-b419-c705796d0b45" Name="Type" Type="7d163957-c506-4762-9e9d-bc6fedefad76" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="2cd11235-c8d2-4aff-8ac1-f088367f0a3f" TypeName="FileStorage" BaseClass="8131954c-95e0-4bde-9c6a-641cebf825e8">
+      <Members>
+        <Reference Guid="49c5cf20-16fa-4961-bc32-a8bbe54dc3a1" Name="Type" Type="47c3a908-9773-4b3c-8d34-63703e726461" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+  </Types>
+</MetadataFileContent>

@@ -1,0 +1,191 @@
+﻿<#@ assembly name="System.Core.dll" #>
+<#
+	foreach( MetadataFile metadataFile in project.Metadata.FilesRecursive )
+	{
+		string fileFullName = "";
+		try
+		{
+			string partialFullName = Host.ResolvePath( System.IO.Path.GetDirectoryName( cppOutputProject ) + @"\" + metadataFile.RelativeName + ".Partial.h" );
+			fileFullName = System.IO.Path.GetDirectoryName( partialFullName ) + @"\" + metadataFile.Name;
+		}
+		catch( System.IO.FileNotFoundException )
+		{
+			Error( "File " + metadataFile.RelativeName + ".Partial.h doesn't exist." );
+		}
+		
+		if ( fileFullName.Length > 0 )
+		{
+			if( !System.IO.File.Exists( fileFullName + ".h" ) )
+			{
+				Warning( "Source file " + fileFullName + ".h created, don't forget to remove it from .tt.log file" );
+				UserHppFileGeneration hppFileGeneration = new UserHppFileGeneration( this, project, metadataFile );
+				hppFileGeneration.Output.File = metadataFile.RelativeName + ".h";
+				hppFileGeneration.Output.Project = cppOutputProject;
+				hppFileGeneration.Render();
+			}
+			if( !System.IO.File.Exists( fileFullName + ".cpp" ) )
+			{
+				Warning( "Source file " + fileFullName + ".cpp created, don't forget to remove it from .tt.log file" );
+				UserCppFileGeneration cppFileGeneration = new UserCppFileGeneration( this, project, metadataFile );
+				cppFileGeneration.Output.File = metadataFile.RelativeName + ".cpp";
+				cppFileGeneration.Output.Project = cppOutputProject;
+				cppFileGeneration.Render();
+			}
+		}
+	}
+#>
+<#+
+public class UserHppFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected metadata.MetadataFile				File;
+	
+	public UserHppFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, metadata.MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+
+// USER'S CODE FILE. PLACE YOUR CLASSES, DATA AND FUNCTIONS HERE.
+
+#ifndef <#=File.RelativeName.Replace( @"\", "_" )#>_h
+#define <#=File.RelativeName.Replace( @"\", "_" )#>_h
+
+#include "<#=File.Name#>.Partial.h"
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine( "" );
+		}
+
+		foreach( Fundamental fundamental in File.Content.Fundamentals )
+		{
+			if ( fundamental.Namespace.Length > 0 )
+				WriteLine( "namespace " + fundamental.Namespace + "{" );
+#>
+class <#=fundamental.TypeName#>_Boxed : public core::DataObject
+{
+public:
+	<#=fundamental.TypeName#> value;
+};
+
+<#+
+			if ( fundamental.Namespace.Length > 0 )
+				WriteLine( "}" );
+		}
+		
+		foreach( MetadataClass c in File.Content.ClassesSorted )
+		{
+			if ( c is CollectionClass )
+				continue;
+				
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "namespace " + c.Namespace );
+				WriteLine( "{" );
+			}
+
+			if ( c.UserDefined )
+			{
+#>			
+class <#=c.TypeName#>
+{
+};
+
+class <#=c.TypeName#>_Boxed : public core::DataObject
+{
+public:
+	<#=c.TypeName#> value;
+};
+<#+
+			}
+			else
+			{
+				string baseDeclaration = "core::DataObject";
+				if ( c.IsReferenced || c is FolderClass || c is FileClass )
+					baseDeclaration = "core::ReferenceObject";
+				if ( c.BaseClass != null )
+				{
+					if ( c.BaseClass.QualifiedNamespace == c.QualifiedNamespace )
+						baseDeclaration = c.BaseClass.TypeName;
+					else
+						baseDeclaration = c.BaseClass.QualifiedTypeNameCpp;
+				}
+			
+#>			
+class <#=c.TypeName#> : public <#=baseDeclaration#>
+	, public <#=c.TypeName#>_Partial
+{
+};
+<#+
+			}
+			if ( c.Namespace.Length > 0 )
+			{
+				WriteLine( "} // namespace " + c.Namespace );
+			}
+
+			WriteLine( "" );
+		}
+
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceEnd );
+		}
+#>
+
+#endif // <#=File.RelativeName.Replace( @"\", "_" )#>_h
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+<#+
+public class UserCppFileGeneration : Template
+{
+	protected GeneratedTextTransformation		TextTransformation;
+	protected metadata.MetadataProject			Project;
+	protected metadata.MetadataFile				File;
+	
+	public UserCppFileGeneration( GeneratedTextTransformation textTransformation, metadata.MetadataProject project, metadata.MetadataFile file )
+	{
+		TextTransformation = textTransformation;
+		Project = project;
+		File = file;
+	}
+	
+	public override string TransformText()
+	{
+#>
+
+// USER'S CODE FILE. PLACE YOUR CLASSES, DATA AND FUNCTIONS HERE.
+
+#include "<#=File.Name#>.h"
+
+<#+
+		string qualifiedNamespaceBegin = File.QualifiedNamespaceBegin;
+		if ( qualifiedNamespaceBegin.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceBegin );
+			WriteLine( "" );
+		}
+		
+		string qualifiedNamespaceEnd = File.QualifiedNamespaceEnd;
+		if ( qualifiedNamespaceEnd.Length > 0 )
+		{
+			WriteLine( qualifiedNamespaceEnd );
+		}
+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

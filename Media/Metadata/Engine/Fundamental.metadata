@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataFileContent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Types>
+    <FundamentalBool Guid="6c9358fe-1ea7-4fa3-a2dc-a18032f9640c" TypeName="bool" />
+    <FundamentalFloat Guid="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" TypeName="float" />
+    <FundamentalInt Guid="6447c198-e591-45b1-8560-60db1de3c6c6" TypeName="int" />
+    <FundamentalString Guid="aeaee131-89ba-484e-b879-9ca8067a7175" TypeName="string" />
+    <FundamentalByte Guid="4980cb9b-76a7-4b3f-b0eb-08a110f4dd9b" TypeName="byte" />
+    <MetadataClass Guid="d52e959b-5ebf-4a6e-a42a-d0c234de2bd9" TypeName="Vec2" IsReferenced="false" HasMinMax="true" UserDefined="true">
+      <Members>
+        <Value Guid="47c8e2e3-9d63-4bbd-b235-ce3d714a85b6" Name="x" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+        <Value Guid="a3d5fa31-c150-47f0-8151-a9097801901b" Name="y" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="112dfe1c-6c21-482d-8836-dd51a3b900d5" TypeName="Vec3" IsReferenced="false" HasMinMax="true" UserDefined="true">
+      <Members>
+        <Value Guid="5cd0c314-9a3c-41c2-b74a-73f4dcbcb285" Name="x" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+        <Value Guid="bb545baf-3aa6-4785-803a-ef3b409f74ea" Name="y" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+        <Value Guid="8f4fd682-b4b1-40c5-ae6c-9e7ee4ff00d2" Name="z" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="9d2791fa-97bd-4f43-8ea0-af0462b7cd69" TypeName="Vec4" IsReferenced="false" HasMinMax="true" UserDefined="true">
+      <Members>
+        <Value Guid="c24e6d22-9eff-47a3-b54c-83b52839e82a" Name="x" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+        <Value Guid="a78486e0-f79a-4213-a9d9-b6e9c92dead4" Name="y" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+        <Value Guid="11eb8741-b3ab-473f-8d60-a914a1428ca4" Name="z" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+        <Value Guid="79afac39-0db8-4b55-90ba-37cd72020b5c" Name="w" Type="aee8cfc3-ab32-40bc-852b-7d9039d12f0d" IsXmlAttr="true" />
+      </Members>
+    </MetadataClass>
+    <MetadataClass Guid="bfe3b0a7-c2d7-4511-ac3e-60145bb18632" TypeName="Color" IsReferenced="false" HasMinMax="true" UserDefined="true">
+      <Members>
+        <Value Guid="77d27a3d-55c3-4593-a018-489b609bff87" Name="r" Type="4980cb9b-76a7-4b3f-b0eb-08a110f4dd9b" IsXmlAttr="true" DefaultValue="0" DefaultValueXml="0" />
+        <Value Guid="3b535228-8210-4a08-9a0c-87d4b6711592" Name="g" Type="4980cb9b-76a7-4b3f-b0eb-08a110f4dd9b" IsXmlAttr="true" DefaultValue="0" DefaultValueXml="0" />
+        <Value Guid="786c248c-59bb-4c30-8407-1fed57139019" Name="b" Type="4980cb9b-76a7-4b3f-b0eb-08a110f4dd9b" IsXmlAttr="true" DefaultValue="0" DefaultValueXml="0" />
+        <Value Guid="0be7832e-2fdc-4388-bb01-e0efacd753e5" Name="a" Type="4980cb9b-76a7-4b3f-b0eb-08a110f4dd9b" IsXmlAttr="true" DefaultValue="255" DefaultValueXml="255" />
+      </Members>
+    </MetadataClass>
+  </Types>
+</MetadataFileContent>

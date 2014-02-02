@@ -1,0 +1,31 @@
+﻿<#@ template hostspecific="True" debug="true" #>
+<#@ assembly name="$(SolutionDir)Bin\Debug\Metadata.dll" #>
+<#@ import namespace="metadata" #>
+<#@ include file="T4Toolbox.tt" #>
+<#@ output extension=".log" #>
+<#
+	metadata.MetadataProject project = null;
+	try
+	{
+		project = project.ProjectLoad( Host.ResolvePath(@"..\Media\Game" + project.ProjectExtension() ) );
+		project.Load();
+	}
+	catch( core.ReferencesFixupException e )
+	{
+		Error( "ReferencesFixupException, Guid=" + e.Guid.ToString() );
+	}
+	catch ( core.TreePathException e )
+	{
+		Error( "TreePathException, Path=" + e.Path.ToString() );
+	}
+	const string csOutputProject = @"Data.csproj";
+	const string csReflectionNamespace = "reflection";
+#>
+<#@ include file="..\Transformations\Cs\GenerateCsPartial.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsSerialization.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsOperations.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsReflection.tt" #>	
+<#@ include file="..\Transformations\Cs\GenerateCsByteStream.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsRemoting.tt" #>
+<#@ include file="..\Transformations\Cs\GenerateCsRemoteClient.tt" #>
+

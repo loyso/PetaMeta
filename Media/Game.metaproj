@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MetadataProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" CoreNamespace="data">
+  <Metadata Guid="f3ccdc0b-c38c-4940-8296-679d0dbc1bed" Name="Metadata">
+    <Folders>
+      <MetadataFolder Guid="37f33aa4-187d-4e0f-9e5d-d9554a20e4bb" Name="Engine">
+        <Folders />
+        <Files>
+          <MetadataFile Guid="73e2fdcd-dbd6-4cd0-9183-601f328244a5" Name="Fundamental" />
+        </Files>
+      </MetadataFolder>
+      <MetadataFolder Guid="5b54a86b-9af8-4eb1-acea-2bf643d45731" Name="Game">
+        <Folders />
+        <Files>
+          <MetadataFile Guid="d7ec25d3-9ad9-4c79-a5e6-f906c05fa204" Name="ProjectGlobals" Namespace="game" />
+          <MetadataFile Guid="1f827129-23b8-43d7-ae72-46f2b6324ae2" Name="Project" Namespace="game" />
+          <MetadataFile Guid="c1cca34e-50ae-4d65-8074-7e48dfeeb582" Name="ProjectGui" Namespace="gui" />
+          <MetadataFile Guid="3c4e7093-4628-4788-a529-68cc45f0f152" Name="ProjectLevels" Namespace="level" />
+          <MetadataFile Guid="fe1db5b4-9ed2-4899-990c-a9ae47ef68a4" Name="Gui" Namespace="gui" />
+          <MetadataFile Guid="04740d8c-e8cb-4081-82bb-09e222ec19c7" Name="Scene" Namespace="scene" />
+        </Files>
+      </MetadataFolder>
+    </Folders>
+    <Files />
+  </Metadata>
+  <MemberGroups>
+    <MetadataMemberGroup Guid="21e882d2-00e7-41c0-a223-328462516dd6" Name="Sound" PartialFileExtension="_snd" />
+    <MetadataMemberGroup Guid="653cb83a-f64c-4ef7-a054-036156a85525" Name="SpecialFX" PartialFileExtension="_sfx" />
+  </MemberGroups>
+</MetadataProject>
